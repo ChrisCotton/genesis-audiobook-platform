@@ -1,0 +1,38 @@
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import Header from './Header';
+import Footer from './Footer';
+import Sidebar from './Sidebar';
+
+function Layout() {
+  const { currentUser } = useAuth();
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-100">
+      <Header />
+      
+      <div className="flex flex-grow">
+        {/* Sidebar - only shown if user is logged in */}
+        {currentUser && (
+          <div className="hidden md:block">
+            <div className="w-64 h-full fixed">
+              <Sidebar />
+            </div>
+          </div>
+        )}
+        
+        {/* Main content */}
+        <main className={`flex-grow ${currentUser ? 'md:ml-64' : ''}`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+      
+      <Footer />
+    </div>
+  );
+}
+
+export default Layout;

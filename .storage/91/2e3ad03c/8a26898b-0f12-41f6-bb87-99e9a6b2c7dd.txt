@@ -1,0 +1,806 @@
+$ cd /data/chats/4mwmi/workspace/../workspace/react_template
+$ ls -la
+
+total 207453
+drwxr-xr-x  9180 root root  90898432 Jun 16 21:57 .
+drwxr-xr-x 12362 root root 121344000 Jun 16 21:57 ..
+-rw-r--r--     1 root root       253 Mar  5 03:46 .gitignore
+-rw-r--r--     1 root root      1185 Mar  5 03:46 README.md
+-rw-r--r--     1 root root      1476 Mar  5 03:46 eslint.config.js
+-rw-r--r--     1 root root       284 Mar  5 03:46 index.html
+drwxr-xr-x     6 root root     20480 Jun 16 21:57 node_modules
+-rw-r--r--     1 root root       957 Mar  5 03:46 package.json
+-rw-r--r--     1 root root    119234 Mar  5 03:46 pnpm-lock.yaml
+-rw-r--r--     1 root root        80 Mar  5 03:46 postcss.config.js
+drwxr-xr-x     7 root root     24576 Mar  5 07:04 public
+drwxr-xr-x     5 root root     16384 Mar  5 07:04 src
+-rw-r--r--     1 root root       170 Mar  5 03:46 tailwind.config.js
+-rw-r--r--     1 root root      1160 Mar  5 03:46 template_config.json
+-rw-r--r--     1 root root       163 Mar  5 03:46 vite.config.js
+$ mkdir -p src/tests/components/book src/tests/components/conversation src/tests/contexts src/tests/__mocks__
+
+$ pnpm run lint
+
+
+> react-template@0.0.0 lint /data/chats/4mwmi/workspace/react_template
+> eslint ./src --quiet
+
+
+/data/chats/4mwmi/workspace/react_template/src/tests/__mocks__/fileMock.js
+  2:1  error  'module' is not defined  no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/book/BookCard.test.jsx
+    8:1  error  'jest' is not defined      no-undef
+    9:6  error  'jest' is not defined      no-undef
+   17:1  error  'describe' is not defined  no-undef
+   20:3  error  'test' is not defined      no-undef
+   23:5  error  'expect' is not defined    no-undef
+   24:5  error  'expect' is not defined    no-undef
+   27:3  error  'test' is not defined      no-undef
+   31:5  error  'expect' is not defined    no-undef
+   34:3  error  'test' is not defined      no-undef
+   38:7  error  'expect' is not defined    no-undef
+   42:3  error  'test' is not defined      no-undef
+   45:5  error  'expect' is not defined    no-undef
+   48:3  error  'test' is not defined      no-undef
+   52:5  error  'expect' is not defined    no-undef
+   55:3  error  'test' is not defined      no-undef
+   59:5  error  'expect' is not defined    no-undef
+   62:3  error  'test' is not defined      no-undef
+   65:5  error  'expect' is not defined    no-undef
+   68:3  error  'test' is not defined      no-undef
+   79:5  error  'expect' is not defined    no-undef
+   82:3  error  'test' is not defined      no-undef
+   90:7  error  'expect' is not defined    no-undef
+   93:7  error  'expect' is not defined    no-undef
+   97:3  error  'test' is not defined      no-undef
+  101:5  error  'expect' is not defined    no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/book/BookViewer.test.jsx
+    7:43  error  'jest' is not defined        no-undef
+    8:42  error  'jest' is not defined        no-undef
+   11:26  error  'jest' is not defined        no-undef
+   14:1   error  'describe' is not defined    no-undef
+   16:28  error  'jest' is not defined        no-undef
+   18:3   error  'beforeEach' is not defined  no-undef
+   19:5   error  'jest' is not defined        no-undef
+   22:3   error  'test' is not defined        no-undef
+   26:5   error  'expect' is not defined      no-undef
+   27:5   error  'expect' is not defined      no-undef
+   28:5   error  'expect' is not defined      no-undef
+   31:5   error  'expect' is not defined      no-undef
+   32:5   error  'expect' is not defined      no-undef
+   35:3   error  'test' is not defined        no-undef
+   40:5   error  'expect' is not defined      no-undef
+   43:5   error  'expect' is not defined      no-undef
+   47:5   error  'expect' is not defined      no-undef
+   50:3   error  'test' is not defined        no-undef
+   58:5   error  'expect' is not defined      no-undef
+   61:3   error  'test' is not defined        no-undef
+   65:5   error  'expect' is not defined      no-undef
+   66:5   error  'expect' is not defined      no-undef
+   72:5   error  'expect' is not defined      no-undef
+   73:5   error  'expect' is not defined      no-undef
+   74:5   error  'expect' is not defined      no-undef
+   77:3   error  'test' is not defined        no-undef
+   85:5   error  'expect' is not defined      no-undef
+   90:3   error  'test' is not defined        no-undef
+   94:5   error  'expect' is not defined      no-undef
+  100:5   error  'expect' is not defined      no-undef
+  101:5   error  'expect' is not defined      no-undef
+  107:5   error  'expect' is not defined      no-undef
+  110:3   error  'test' is not defined        no-undef
+  134:5   error  'expect' is not defined      no-undef
+  137:3   error  'test' is not defined        no-undef
+  144:5   error  'expect' is not defined      no-undef
+  150:5   error  'expect' is not defined      no-undef
+  153:3   error  'test' is not defined        no-undef
+  166:5   error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/book/FileUpload.test.jsx
+    7:29  error  'jest' is not defined        no-undef
+    8:27  error  'jest' is not defined        no-undef
+   11:1   error  'global' is not defined      no-undef
+   11:16  error  'jest' is not defined        no-undef
+   24:1   error  'describe' is not defined    no-undef
+   25:3   error  'beforeEach' is not defined  no-undef
+   26:5   error  'jest' is not defined        no-undef
+   29:3   error  'test' is not defined        no-undef
+   38:5   error  'expect' is not defined      no-undef
+   39:5   error  'expect' is not defined      no-undef
+   40:5   error  'expect' is not defined      no-undef
+   41:5   error  'expect' is not defined      no-undef
+   42:5   error  'expect' is not defined      no-undef
+   43:5   error  'expect' is not defined      no-undef
+   46:3   error  'test' is not defined        no-undef
+   75:7   error  'expect' is not defined      no-undef
+   79:3   error  'test' is not defined        no-undef
+   99:7   error  'expect' is not defined      no-undef
+  103:3   error  'test' is not defined        no-undef
+  138:5   error  'expect' is not defined      no-undef
+  142:7   error  'expect' is not defined      no-undef
+  142:56  error  'expect' is not defined      no-undef
+  149:3   error  'test' is not defined        no-undef
+  151:5   error  'global' is not defined      no-undef
+  192:7   error  'expect' is not defined      no-undef
+  196:3   error  'test' is not defined        no-undef
+  216:7   error  'expect' is not defined      no-undef
+  220:5   error  'expect' is not defined      no-undef
+  223:3   error  'test' is not defined        no-undef
+  248:7   error  'expect' is not defined      no-undef
+  252:5   error  'expect' is not defined      no-undef
+  255:3   error  'test' is not defined        no-undef
+  285:7   error  'expect' is not defined      no-undef
+  286:7   error  'expect' is not defined      no-undef
+  287:7   error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/book/TextExtractor.test.jsx
+    8:22  error  'jest' is not defined        no-undef
+   11:15  error  'jest' is not defined        no-undef
+   16:1   error  'global' is not defined      no-undef
+   16:21  error  'jest' is not defined        no-undef
+   19:1   error  'jest' is not defined        no-undef
+   20:16  error  'jest' is not defined        no-undef
+   22:14  error  'jest' is not defined        no-undef
+   23:23  error  'jest' is not defined        no-undef
+   37:1   error  'jest' is not defined        no-undef
+   39:12  error  'jest' is not defined        no-undef
+   54:17  error  'jest' is not defined        no-undef
+   58:13  error  'jest' is not defined        no-undef
+   59:16  error  'jest' is not defined        no-undef
+   68:1   error  'describe' is not defined    no-undef
+   69:26  error  'jest' is not defined        no-undef
+   70:26  error  'jest' is not defined        no-undef
+   72:3   error  'beforeEach' is not defined  no-undef
+   73:5   error  'jest' is not defined        no-undef
+   76:3   error  'test' is not defined        no-undef
+   85:5   error  'expect' is not defined      no-undef
+   86:5   error  'expect' is not defined      no-undef
+   87:5   error  'expect' is not defined      no-undef
+   90:3   error  'test' is not defined        no-undef
+  111:5   error  'expect' is not defined      no-undef
+  115:7   error  'expect' is not defined      no-undef
+  115:51  error  'expect' is not defined      no-undef
+  116:15  error  'expect' is not defined      no-undef
+  117:16  error  'expect' is not defined      no-undef
+  118:16  error  'expect' is not defined      no-undef
+  123:5   error  'expect' is not defined      no-undef
+  126:3   error  'test' is not defined        no-undef
+  148:7   error  'expect' is not defined      no-undef
+  148:51  error  'expect' is not defined      no-undef
+  149:15  error  'expect' is not defined      no-undef
+  156:3   error  'test' is not defined        no-undef
+  178:7   error  'expect' is not defined      no-undef
+  178:51  error  'expect' is not defined      no-undef
+  179:15  error  'expect' is not defined      no-undef
+  185:3   error  'test' is not defined        no-undef
+  204:7   error  'expect' is not defined      no-undef
+  208:5   error  'expect' is not defined      no-undef
+  211:3   error  'test' is not defined        no-undef
+  213:5   error  'require' is not defined     no-undef
+  238:7   error  'expect' is not defined      no-undef
+  242:3   error  'test' is not defined        no-undef
+  246:19  error  'jest' is not defined        no-undef
+  254:5   error  'global' is not defined      no-undef
+  254:25  error  'jest' is not defined        no-undef
+  277:7   error  'expect' is not defined      no-undef
+  277:51  error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/conversation/AIChat.test.jsx
+    7:1  error  'jest' is not defined        no-undef
+    9:1  error  'describe' is not defined    no-undef
+   12:3  error  'beforeEach' is not defined  no-undef
+   13:5  error  'jest' is not defined        no-undef
+   16:3  error  'test' is not defined        no-undef
+   20:5  error  'expect' is not defined      no-undef
+   23:3  error  'test' is not defined        no-undef
+   35:5  error  'expect' is not defined      no-undef
+   38:5  error  'expect' is not defined      no-undef
+   42:7  error  'jest' is not defined        no-undef
+   47:7  error  'expect' is not defined      no-undef
+   51:5  error  'expect' is not defined      no-undef
+   54:3  error  'test' is not defined        no-undef
+   64:7  error  'jest' is not defined        no-undef
+   69:7  error  'expect' is not defined      no-undef
+   73:3  error  'test' is not defined        no-undef
+   77:5  error  'expect' is not defined      no-undef
+   82:5  error  'expect' is not defined      no-undef
+   86:5  error  'expect' is not defined      no-undef
+   89:3  error  'test' is not defined        no-undef
+   93:5  error  'expect' is not defined      no-undef
+   94:5  error  'expect' is not defined      no-undef
+   97:3  error  'test' is not defined        no-undef
+  106:5  error  'expect' is not defined      no-undef
+  110:5  error  'expect' is not defined      no-undef
+  113:3  error  'test' is not defined        no-undef
+  122:7  error  'jest' is not defined        no-undef
+  126:7  error  'expect' is not defined      no-undef
+  138:7  error  'jest' is not defined        no-undef
+  142:7  error  'expect' is not defined      no-undef
+  146:3  error  'test' is not defined        no-undef
+  153:5  error  'expect' is not defined      no-undef
+  156:7  error  'jest' is not defined        no-undef
+  160:7  error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/learning/Quiz.test.jsx
+    7:28  error  'jest' is not defined        no-undef
+    8:21  error  'jest' is not defined        no-undef
+   10:1   error  'describe' is not defined    no-undef
+   13:3   error  'beforeEach' is not defined  no-undef
+   14:5   error  'jest' is not defined        no-undef
+   17:3   error  'test' is not defined        no-undef
+   27:5   error  'expect' is not defined      no-undef
+   30:5   error  'expect' is not defined      no-undef
+   34:7   error  'expect' is not defined      no-undef
+   38:5   error  'expect' is not defined      no-undef
+   41:3   error  'test' is not defined        no-undef
+   55:5   error  'expect' is not defined      no-undef
+   58:3   error  'test' is not defined        no-undef
+   75:7   error  'expect' is not defined      no-undef
+   79:5   error  'expect' is not defined      no-undef
+   82:3   error  'test' is not defined        no-undef
+  102:7   error  'expect' is not defined      no-undef
+  106:5   error  'expect' is not defined      no-undef
+  109:3   error  'test' is not defined        no-undef
+  133:7   error  'expect' is not defined      no-undef
+  137:5   error  'expect' is not defined      no-undef
+  144:3   error  'test' is not defined        no-undef
+  164:7   error  'expect' is not defined      no-undef
+  178:7   error  'expect' is not defined      no-undef
+  182:3   error  'test' is not defined        no-undef
+  195:5   error  'expect' is not defined      no-undef
+  198:3   error  'test' is not defined        no-undef
+  199:5   error  'jest' is not defined        no-undef
+  211:5   error  'expect' is not defined      no-undef
+  214:5   error  'act' is not defined         no-undef
+  215:7   error  'jest' is not defined        no-undef
+  220:7   error  'expect' is not defined      no-undef
+  224:5   error  'jest' is not defined        no-undef
+  227:3   error  'test' is not defined        no-undef
+  228:5   error  'jest' is not defined        no-undef
+  243:5   error  'act' is not defined         no-undef
+  244:7   error  'jest' is not defined        no-undef
+  249:7   error  'expect' is not defined      no-undef
+  253:5   error  'expect' is not defined      no-undef
+  256:5   error  'jest' is not defined        no-undef
+  259:3   error  'test' is not defined        no-undef
+  287:5   error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/voice/VoiceSynthesis.test.jsx
+    5:1   error  'describe' is not defined    no-undef
+    7:23  error  'jest' is not defined        no-undef
+    8:21  error  'jest' is not defined        no-undef
+    9:23  error  'jest' is not defined        no-undef
+   10:24  error  'jest' is not defined        no-undef
+   13:3   error  'beforeEach' is not defined  no-undef
+   14:5   error  'jest' is not defined        no-undef
+   26:3   error  'test' is not defined        no-undef
+   38:5   error  'expect' is not defined      no-undef
+   39:5   error  'expect' is not defined      no-undef
+   40:5   error  'expect' is not defined      no-undef
+   41:5   error  'expect' is not defined      no-undef
+   42:5   error  'expect' is not defined      no-undef
+   45:3   error  'test' is not defined        no-undef
+   59:7   error  'expect' is not defined      no-undef
+   63:5   error  'expect' is not defined      no-undef
+   64:5   error  'expect' is not defined      no-undef
+   65:5   error  'expect' is not defined      no-undef
+   68:3   error  'test' is not defined        no-undef
+   81:5   error  'expect' is not defined      no-undef
+   84:5   error  'expect' is not defined      no-undef
+   87:5   error  'expect' is not defined      no-undef
+   90:3   error  'test' is not defined        no-undef
+  103:5   error  'expect' is not defined      no-undef
+  107:5   error  'expect' is not defined      no-undef
+  108:5   error  'expect' is not defined      no-undef
+  111:5   error  'expect' is not defined      no-undef
+  115:5   error  'expect' is not defined      no-undef
+  116:5   error  'expect' is not defined      no-undef
+  119:5   error  'expect' is not defined      no-undef
+  122:3   error  'test' is not defined        no-undef
+  136:5   error  'expect' is not defined      no-undef
+  139:5   error  'expect' is not defined      no-undef
+  142:3   error  'test' is not defined        no-undef
+  153:7   error  'expect' is not defined      no-undef
+  164:5   error  'expect' is not defined      no-undef
+  167:3   error  'test' is not defined        no-undef
+  184:5   error  'expect' is not defined      no-undef
+  187:3   error  'test' is not defined        no-undef
+  204:5   error  'expect' is not defined      no-undef
+  207:3   error  'test' is not defined        no-undef
+  224:5   error  'expect' is not defined      no-undef
+  227:3   error  'test' is not defined        no-undef
+  241:5   error  'expect' is not defined      no-undef
+  247:3   error  'test' is not defined        no-undef
+  268:5   error  'expect' is not defined      no-undef
+  271:5   error  'expect' is not defined      no-undef
+  274:3   error  'test' is not defined        no-undef
+  290:5   error  'expect' is not defined      no-undef
+  293:3   error  'test' is not defined        no-undef
+  314:5   error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/contexts/AuthContext.test.jsx
+   53:1   error  'describe' is not defined    no-undef
+   54:3   error  'beforeEach' is not defined  no-undef
+   57:5   error  'jest' is not defined        no-undef
+   60:3   error  'test' is not defined        no-undef
+   68:5   error  'expect' is not defined      no-undef
+   72:7   error  'jest' is not defined        no-undef
+   76:5   error  'expect' is not defined      no-undef
+   79:3   error  'test' is not defined        no-undef
+   88:7   error  'expect' is not defined      no-undef
+   95:5   error  'expect' is not defined      no-undef
+   99:7   error  'expect' is not defined      no-undef
+  103:5   error  'expect' is not defined      no-undef
+  104:5   error  'expect' is not defined      no-undef
+  107:3   error  'test' is not defined        no-undef
+  119:7   error  'expect' is not defined      no-undef
+  126:5   error  'expect' is not defined      no-undef
+  127:5   error  'expect' is not defined      no-undef
+  130:3   error  'test' is not defined        no-undef
+  142:7   error  'expect' is not defined      no-undef
+  146:5   error  'expect' is not defined      no-undef
+  147:5   error  'expect' is not defined      no-undef
+  148:5   error  'expect' is not defined      no-undef
+  151:3   error  'test' is not defined        no-undef
+  164:7   error  'expect' is not defined      no-undef
+  168:5   error  'expect' is not defined      no-undef
+  169:5   error  'expect' is not defined      no-undef
+  170:5   error  'expect' is not defined      no-undef
+  173:3   error  'test' is not defined        no-undef
+  179:14  error  'jest' is not defined        no-undef
+  180:15  error  'jest' is not defined        no-undef
+  181:17  error  'jest' is not defined        no-undef
+  195:7   error  'expect' is not defined      no-undef
+  196:7   error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/contexts/BookContext.test.jsx
+   91:1  error  'describe' is not defined    no-undef
+   99:3  error  'beforeEach' is not defined  no-undef
+  100:5  error  'jest' is not defined        no-undef
+  103:3  error  'test' is not defined        no-undef
+  113:5  error  'expect' is not defined      no-undef
+  117:7  error  'expect' is not defined      no-undef
+  121:5  error  'expect' is not defined      no-undef
+  125:7  error  'expect' is not defined      no-undef
+  129:3  error  'test' is not defined        no-undef
+  140:7  error  'expect' is not defined      no-undef
+  147:5  error  'expect' is not defined      no-undef
+  150:3  error  'test' is not defined        no-undef
+  161:7  error  'expect' is not defined      no-undef
+  172:7  error  'expect' is not defined      no-undef
+  176:5  error  'expect' is not defined      no-undef
+  179:3  error  'test' is not defined        no-undef
+  190:7  error  'expect' is not defined      no-undef
+  201:7  error  'expect' is not defined      no-undef
+  205:5  error  'expect' is not defined      no-undef
+  208:3  error  'test' is not defined        no-undef
+  226:7  error  'expect' is not defined      no-undef
+  230:5  error  'expect' is not defined      no-undef
+  233:3  error  'test' is not defined        no-undef
+  244:7  error  'expect' is not defined      no-undef
+  258:7  error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/setup.js
+    2:1   error  'global' is not defined   no-undef
+    2:22  error  'require' is not defined  no-undef
+    3:1   error  'global' is not defined   no-undef
+    3:22  error  'require' is not defined  no-undef
+    8:10  error  'jest' is not defined     no-undef
+   12:18  error  'jest' is not defined     no-undef
+   13:21  error  'jest' is not defined     no-undef
+   14:23  error  'jest' is not defined     no-undef
+   15:26  error  'jest' is not defined     no-undef
+   16:20  error  'jest' is not defined     no-undef
+   46:10  error  'jest' is not defined     no-undef
+   47:11  error  'jest' is not defined     no-undef
+   48:10  error  'jest' is not defined     no-undef
+   49:11  error  'jest' is not defined     no-undef
+   50:14  error  'jest' is not defined     no-undef
+   55:21  error  'jest' is not defined     no-undef
+   56:24  error  'jest' is not defined     no-undef
+   81:14  error  'jest' is not defined     no-undef
+   82:14  error  'jest' is not defined     no-undef
+   85:17  error  'jest' is not defined     no-undef
+   88:12  error  'jest' is not defined     no-undef
+   99:1   error  'global' is not defined   no-undef
+   99:16  error  'jest' is not defined     no-undef
+  102:1   error  'jest' is not defined     no-undef
+
+✖ 359 problems (359 errors, 0 warnings)
+
+ ELIFECYCLE  Command failed with exit code 1.
+$ pnpm run lint
+
+
+> react-template@0.0.0 lint /data/chats/4mwmi/workspace/react_template
+> eslint ./src --quiet
+
+
+/data/chats/4mwmi/workspace/react_template/src/tests/.eslintrc.js
+  1:1  error  'module' is not defined  no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/__mocks__/fileMock.js
+  2:1  error  'module' is not defined  no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/book/BookCard.test.jsx
+    8:1  error  'jest' is not defined      no-undef
+    9:6  error  'jest' is not defined      no-undef
+   17:1  error  'describe' is not defined  no-undef
+   20:3  error  'test' is not defined      no-undef
+   23:5  error  'expect' is not defined    no-undef
+   24:5  error  'expect' is not defined    no-undef
+   27:3  error  'test' is not defined      no-undef
+   31:5  error  'expect' is not defined    no-undef
+   34:3  error  'test' is not defined      no-undef
+   38:7  error  'expect' is not defined    no-undef
+   42:3  error  'test' is not defined      no-undef
+   45:5  error  'expect' is not defined    no-undef
+   48:3  error  'test' is not defined      no-undef
+   52:5  error  'expect' is not defined    no-undef
+   55:3  error  'test' is not defined      no-undef
+   59:5  error  'expect' is not defined    no-undef
+   62:3  error  'test' is not defined      no-undef
+   65:5  error  'expect' is not defined    no-undef
+   68:3  error  'test' is not defined      no-undef
+   79:5  error  'expect' is not defined    no-undef
+   82:3  error  'test' is not defined      no-undef
+   90:7  error  'expect' is not defined    no-undef
+   93:7  error  'expect' is not defined    no-undef
+   97:3  error  'test' is not defined      no-undef
+  101:5  error  'expect' is not defined    no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/book/BookViewer.test.jsx
+    7:43  error  'jest' is not defined        no-undef
+    8:42  error  'jest' is not defined        no-undef
+   11:26  error  'jest' is not defined        no-undef
+   14:1   error  'describe' is not defined    no-undef
+   16:28  error  'jest' is not defined        no-undef
+   18:3   error  'beforeEach' is not defined  no-undef
+   19:5   error  'jest' is not defined        no-undef
+   22:3   error  'test' is not defined        no-undef
+   26:5   error  'expect' is not defined      no-undef
+   27:5   error  'expect' is not defined      no-undef
+   28:5   error  'expect' is not defined      no-undef
+   31:5   error  'expect' is not defined      no-undef
+   32:5   error  'expect' is not defined      no-undef
+   35:3   error  'test' is not defined        no-undef
+   40:5   error  'expect' is not defined      no-undef
+   43:5   error  'expect' is not defined      no-undef
+   47:5   error  'expect' is not defined      no-undef
+   50:3   error  'test' is not defined        no-undef
+   58:5   error  'expect' is not defined      no-undef
+   61:3   error  'test' is not defined        no-undef
+   65:5   error  'expect' is not defined      no-undef
+   66:5   error  'expect' is not defined      no-undef
+   72:5   error  'expect' is not defined      no-undef
+   73:5   error  'expect' is not defined      no-undef
+   74:5   error  'expect' is not defined      no-undef
+   77:3   error  'test' is not defined        no-undef
+   85:5   error  'expect' is not defined      no-undef
+   90:3   error  'test' is not defined        no-undef
+   94:5   error  'expect' is not defined      no-undef
+  100:5   error  'expect' is not defined      no-undef
+  101:5   error  'expect' is not defined      no-undef
+  107:5   error  'expect' is not defined      no-undef
+  110:3   error  'test' is not defined        no-undef
+  134:5   error  'expect' is not defined      no-undef
+  137:3   error  'test' is not defined        no-undef
+  144:5   error  'expect' is not defined      no-undef
+  150:5   error  'expect' is not defined      no-undef
+  153:3   error  'test' is not defined        no-undef
+  166:5   error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/book/FileUpload.test.jsx
+    7:29  error  'jest' is not defined        no-undef
+    8:27  error  'jest' is not defined        no-undef
+   11:1   error  'global' is not defined      no-undef
+   11:16  error  'jest' is not defined        no-undef
+   24:1   error  'describe' is not defined    no-undef
+   25:3   error  'beforeEach' is not defined  no-undef
+   26:5   error  'jest' is not defined        no-undef
+   29:3   error  'test' is not defined        no-undef
+   38:5   error  'expect' is not defined      no-undef
+   39:5   error  'expect' is not defined      no-undef
+   40:5   error  'expect' is not defined      no-undef
+   41:5   error  'expect' is not defined      no-undef
+   42:5   error  'expect' is not defined      no-undef
+   43:5   error  'expect' is not defined      no-undef
+   46:3   error  'test' is not defined        no-undef
+   75:7   error  'expect' is not defined      no-undef
+   79:3   error  'test' is not defined        no-undef
+   99:7   error  'expect' is not defined      no-undef
+  103:3   error  'test' is not defined        no-undef
+  138:5   error  'expect' is not defined      no-undef
+  142:7   error  'expect' is not defined      no-undef
+  142:56  error  'expect' is not defined      no-undef
+  149:3   error  'test' is not defined        no-undef
+  151:5   error  'global' is not defined      no-undef
+  192:7   error  'expect' is not defined      no-undef
+  196:3   error  'test' is not defined        no-undef
+  216:7   error  'expect' is not defined      no-undef
+  220:5   error  'expect' is not defined      no-undef
+  223:3   error  'test' is not defined        no-undef
+  248:7   error  'expect' is not defined      no-undef
+  252:5   error  'expect' is not defined      no-undef
+  255:3   error  'test' is not defined        no-undef
+  285:7   error  'expect' is not defined      no-undef
+  286:7   error  'expect' is not defined      no-undef
+  287:7   error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/book/TextExtractor.test.jsx
+    8:22  error  'jest' is not defined        no-undef
+   11:15  error  'jest' is not defined        no-undef
+   16:1   error  'global' is not defined      no-undef
+   16:21  error  'jest' is not defined        no-undef
+   19:1   error  'jest' is not defined        no-undef
+   20:16  error  'jest' is not defined        no-undef
+   22:14  error  'jest' is not defined        no-undef
+   23:23  error  'jest' is not defined        no-undef
+   37:1   error  'jest' is not defined        no-undef
+   39:12  error  'jest' is not defined        no-undef
+   54:17  error  'jest' is not defined        no-undef
+   58:13  error  'jest' is not defined        no-undef
+   59:16  error  'jest' is not defined        no-undef
+   68:1   error  'describe' is not defined    no-undef
+   69:26  error  'jest' is not defined        no-undef
+   70:26  error  'jest' is not defined        no-undef
+   72:3   error  'beforeEach' is not defined  no-undef
+   73:5   error  'jest' is not defined        no-undef
+   76:3   error  'test' is not defined        no-undef
+   85:5   error  'expect' is not defined      no-undef
+   86:5   error  'expect' is not defined      no-undef
+   87:5   error  'expect' is not defined      no-undef
+   90:3   error  'test' is not defined        no-undef
+  111:5   error  'expect' is not defined      no-undef
+  115:7   error  'expect' is not defined      no-undef
+  115:51  error  'expect' is not defined      no-undef
+  116:15  error  'expect' is not defined      no-undef
+  117:16  error  'expect' is not defined      no-undef
+  118:16  error  'expect' is not defined      no-undef
+  123:5   error  'expect' is not defined      no-undef
+  126:3   error  'test' is not defined        no-undef
+  148:7   error  'expect' is not defined      no-undef
+  148:51  error  'expect' is not defined      no-undef
+  149:15  error  'expect' is not defined      no-undef
+  156:3   error  'test' is not defined        no-undef
+  178:7   error  'expect' is not defined      no-undef
+  178:51  error  'expect' is not defined      no-undef
+  179:15  error  'expect' is not defined      no-undef
+  185:3   error  'test' is not defined        no-undef
+  204:7   error  'expect' is not defined      no-undef
+  208:5   error  'expect' is not defined      no-undef
+  211:3   error  'test' is not defined        no-undef
+  213:5   error  'require' is not defined     no-undef
+  238:7   error  'expect' is not defined      no-undef
+  242:3   error  'test' is not defined        no-undef
+  246:19  error  'jest' is not defined        no-undef
+  254:5   error  'global' is not defined      no-undef
+  254:25  error  'jest' is not defined        no-undef
+  277:7   error  'expect' is not defined      no-undef
+  277:51  error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/conversation/AIChat.test.jsx
+    7:1  error  'jest' is not defined        no-undef
+    9:1  error  'describe' is not defined    no-undef
+   12:3  error  'beforeEach' is not defined  no-undef
+   13:5  error  'jest' is not defined        no-undef
+   16:3  error  'test' is not defined        no-undef
+   20:5  error  'expect' is not defined      no-undef
+   23:3  error  'test' is not defined        no-undef
+   35:5  error  'expect' is not defined      no-undef
+   38:5  error  'expect' is not defined      no-undef
+   42:7  error  'jest' is not defined        no-undef
+   47:7  error  'expect' is not defined      no-undef
+   51:5  error  'expect' is not defined      no-undef
+   54:3  error  'test' is not defined        no-undef
+   64:7  error  'jest' is not defined        no-undef
+   69:7  error  'expect' is not defined      no-undef
+   73:3  error  'test' is not defined        no-undef
+   77:5  error  'expect' is not defined      no-undef
+   82:5  error  'expect' is not defined      no-undef
+   86:5  error  'expect' is not defined      no-undef
+   89:3  error  'test' is not defined        no-undef
+   93:5  error  'expect' is not defined      no-undef
+   94:5  error  'expect' is not defined      no-undef
+   97:3  error  'test' is not defined        no-undef
+  106:5  error  'expect' is not defined      no-undef
+  110:5  error  'expect' is not defined      no-undef
+  113:3  error  'test' is not defined        no-undef
+  122:7  error  'jest' is not defined        no-undef
+  126:7  error  'expect' is not defined      no-undef
+  138:7  error  'jest' is not defined        no-undef
+  142:7  error  'expect' is not defined      no-undef
+  146:3  error  'test' is not defined        no-undef
+  153:5  error  'expect' is not defined      no-undef
+  156:7  error  'jest' is not defined        no-undef
+  160:7  error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/learning/Quiz.test.jsx
+    7:28  error  'jest' is not defined        no-undef
+    8:21  error  'jest' is not defined        no-undef
+   10:1   error  'describe' is not defined    no-undef
+   13:3   error  'beforeEach' is not defined  no-undef
+   14:5   error  'jest' is not defined        no-undef
+   17:3   error  'test' is not defined        no-undef
+   27:5   error  'expect' is not defined      no-undef
+   30:5   error  'expect' is not defined      no-undef
+   34:7   error  'expect' is not defined      no-undef
+   38:5   error  'expect' is not defined      no-undef
+   41:3   error  'test' is not defined        no-undef
+   55:5   error  'expect' is not defined      no-undef
+   58:3   error  'test' is not defined        no-undef
+   75:7   error  'expect' is not defined      no-undef
+   79:5   error  'expect' is not defined      no-undef
+   82:3   error  'test' is not defined        no-undef
+  102:7   error  'expect' is not defined      no-undef
+  106:5   error  'expect' is not defined      no-undef
+  109:3   error  'test' is not defined        no-undef
+  133:7   error  'expect' is not defined      no-undef
+  137:5   error  'expect' is not defined      no-undef
+  144:3   error  'test' is not defined        no-undef
+  164:7   error  'expect' is not defined      no-undef
+  178:7   error  'expect' is not defined      no-undef
+  182:3   error  'test' is not defined        no-undef
+  195:5   error  'expect' is not defined      no-undef
+  198:3   error  'test' is not defined        no-undef
+  199:5   error  'jest' is not defined        no-undef
+  211:5   error  'expect' is not defined      no-undef
+  214:5   error  'act' is not defined         no-undef
+  215:7   error  'jest' is not defined        no-undef
+  220:7   error  'expect' is not defined      no-undef
+  224:5   error  'jest' is not defined        no-undef
+  227:3   error  'test' is not defined        no-undef
+  228:5   error  'jest' is not defined        no-undef
+  243:5   error  'act' is not defined         no-undef
+  244:7   error  'jest' is not defined        no-undef
+  249:7   error  'expect' is not defined      no-undef
+  253:5   error  'expect' is not defined      no-undef
+  256:5   error  'jest' is not defined        no-undef
+  259:3   error  'test' is not defined        no-undef
+  287:5   error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/components/voice/VoiceSynthesis.test.jsx
+    5:1   error  'describe' is not defined    no-undef
+    7:23  error  'jest' is not defined        no-undef
+    8:21  error  'jest' is not defined        no-undef
+    9:23  error  'jest' is not defined        no-undef
+   10:24  error  'jest' is not defined        no-undef
+   13:3   error  'beforeEach' is not defined  no-undef
+   14:5   error  'jest' is not defined        no-undef
+   26:3   error  'test' is not defined        no-undef
+   38:5   error  'expect' is not defined      no-undef
+   39:5   error  'expect' is not defined      no-undef
+   40:5   error  'expect' is not defined      no-undef
+   41:5   error  'expect' is not defined      no-undef
+   42:5   error  'expect' is not defined      no-undef
+   45:3   error  'test' is not defined        no-undef
+   59:7   error  'expect' is not defined      no-undef
+   63:5   error  'expect' is not defined      no-undef
+   64:5   error  'expect' is not defined      no-undef
+   65:5   error  'expect' is not defined      no-undef
+   68:3   error  'test' is not defined        no-undef
+   81:5   error  'expect' is not defined      no-undef
+   84:5   error  'expect' is not defined      no-undef
+   87:5   error  'expect' is not defined      no-undef
+   90:3   error  'test' is not defined        no-undef
+  103:5   error  'expect' is not defined      no-undef
+  107:5   error  'expect' is not defined      no-undef
+  108:5   error  'expect' is not defined      no-undef
+  111:5   error  'expect' is not defined      no-undef
+  115:5   error  'expect' is not defined      no-undef
+  116:5   error  'expect' is not defined      no-undef
+  119:5   error  'expect' is not defined      no-undef
+  122:3   error  'test' is not defined        no-undef
+  136:5   error  'expect' is not defined      no-undef
+  139:5   error  'expect' is not defined      no-undef
+  142:3   error  'test' is not defined        no-undef
+  153:7   error  'expect' is not defined      no-undef
+  164:5   error  'expect' is not defined      no-undef
+  167:3   error  'test' is not defined        no-undef
+  184:5   error  'expect' is not defined      no-undef
+  187:3   error  'test' is not defined        no-undef
+  204:5   error  'expect' is not defined      no-undef
+  207:3   error  'test' is not defined        no-undef
+  224:5   error  'expect' is not defined      no-undef
+  227:3   error  'test' is not defined        no-undef
+  241:5   error  'expect' is not defined      no-undef
+  247:3   error  'test' is not defined        no-undef
+  268:5   error  'expect' is not defined      no-undef
+  271:5   error  'expect' is not defined      no-undef
+  274:3   error  'test' is not defined        no-undef
+  290:5   error  'expect' is not defined      no-undef
+  293:3   error  'test' is not defined        no-undef
+  314:5   error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/contexts/AuthContext.test.jsx
+   53:1   error  'describe' is not defined    no-undef
+   54:3   error  'beforeEach' is not defined  no-undef
+   57:5   error  'jest' is not defined        no-undef
+   60:3   error  'test' is not defined        no-undef
+   68:5   error  'expect' is not defined      no-undef
+   72:7   error  'jest' is not defined        no-undef
+   76:5   error  'expect' is not defined      no-undef
+   79:3   error  'test' is not defined        no-undef
+   88:7   error  'expect' is not defined      no-undef
+   95:5   error  'expect' is not defined      no-undef
+   99:7   error  'expect' is not defined      no-undef
+  103:5   error  'expect' is not defined      no-undef
+  104:5   error  'expect' is not defined      no-undef
+  107:3   error  'test' is not defined        no-undef
+  119:7   error  'expect' is not defined      no-undef
+  126:5   error  'expect' is not defined      no-undef
+  127:5   error  'expect' is not defined      no-undef
+  130:3   error  'test' is not defined        no-undef
+  142:7   error  'expect' is not defined      no-undef
+  146:5   error  'expect' is not defined      no-undef
+  147:5   error  'expect' is not defined      no-undef
+  148:5   error  'expect' is not defined      no-undef
+  151:3   error  'test' is not defined        no-undef
+  164:7   error  'expect' is not defined      no-undef
+  168:5   error  'expect' is not defined      no-undef
+  169:5   error  'expect' is not defined      no-undef
+  170:5   error  'expect' is not defined      no-undef
+  173:3   error  'test' is not defined        no-undef
+  179:14  error  'jest' is not defined        no-undef
+  180:15  error  'jest' is not defined        no-undef
+  181:17  error  'jest' is not defined        no-undef
+  195:7   error  'expect' is not defined      no-undef
+  196:7   error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/contexts/BookContext.test.jsx
+   91:1  error  'describe' is not defined    no-undef
+   99:3  error  'beforeEach' is not defined  no-undef
+  100:5  error  'jest' is not defined        no-undef
+  103:3  error  'test' is not defined        no-undef
+  113:5  error  'expect' is not defined      no-undef
+  117:7  error  'expect' is not defined      no-undef
+  121:5  error  'expect' is not defined      no-undef
+  125:7  error  'expect' is not defined      no-undef
+  129:3  error  'test' is not defined        no-undef
+  140:7  error  'expect' is not defined      no-undef
+  147:5  error  'expect' is not defined      no-undef
+  150:3  error  'test' is not defined        no-undef
+  161:7  error  'expect' is not defined      no-undef
+  172:7  error  'expect' is not defined      no-undef
+  176:5  error  'expect' is not defined      no-undef
+  179:3  error  'test' is not defined        no-undef
+  190:7  error  'expect' is not defined      no-undef
+  201:7  error  'expect' is not defined      no-undef
+  205:5  error  'expect' is not defined      no-undef
+  208:3  error  'test' is not defined        no-undef
+  226:7  error  'expect' is not defined      no-undef
+  230:5  error  'expect' is not defined      no-undef
+  233:3  error  'test' is not defined        no-undef
+  244:7  error  'expect' is not defined      no-undef
+  258:7  error  'expect' is not defined      no-undef
+
+/data/chats/4mwmi/workspace/react_template/src/tests/setup.js
+    2:1   error  'global' is not defined   no-undef
+    2:22  error  'require' is not defined  no-undef
+    3:1   error  'global' is not defined   no-undef
+    3:22  error  'require' is not defined  no-undef
+    8:10  error  'jest' is not defined     no-undef
+   12:18  error  'jest' is not defined     no-undef
+   13:21  error  'jest' is not defined     no-undef
+   14:23  error  'jest' is not defined     no-undef
+   15:26  error  'jest' is not defined     no-undef
+   16:20  error  'jest' is not defined     no-undef
+   46:10  error  'jest' is not defined     no-undef
+   47:11  error  'jest' is not defined     no-undef
+   48:10  error  'jest' is not defined     no-undef
+   49:11  error  'jest' is not defined     no-undef
+   50:14  error  'jest' is not defined     no-undef
+   55:21  error  'jest' is not defined     no-undef
+   56:24  error  'jest' is not defined     no-undef
+   81:14  error  'jest' is not defined     no-undef
+   82:14  error  'jest' is not defined     no-undef
+   85:17  error  'jest' is not defined     no-undef
+   88:12  error  'jest' is not defined     no-undef
+   99:1   error  'global' is not defined   no-undef
+   99:16  error  'jest' is not defined     no-undef
+  102:1   error  'jest' is not defined     no-undef
+
+✖ 360 problems (360 errors, 0 warnings)
+
+ ELIFECYCLE  Command failed with exit code 1.

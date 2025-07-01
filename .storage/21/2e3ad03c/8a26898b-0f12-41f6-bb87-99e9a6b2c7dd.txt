@@ -1,0 +1,19 @@
+$ cd /data/chats/4mwmi/workspace/../workspace/react_template
+$ ls -la
+
+total 207453
+drwxr-xr-x  9180 root root  90898432 Jun 16 21:57 .
+drwxr-xr-x 12362 root root 121344000 Jun 16 21:57 ..
+-rw-r--r--     1 root root       253 Mar  5 03:46 .gitignore
+-rw-r--r--     1 root root      1185 Mar  5 03:46 README.md
+-rw-r--r--     1 root root      1476 Mar  5 03:46 eslint.config.js
+-rw-r--r--     1 root root       284 Mar  5 03:46 index.html
+drwxr-xr-x     6 root root     20480 Jun 16 21:57 node_modules
+-rw-r--r--     1 root root       957 Mar  5 03:46 package.json
+-rw-r--r--     1 root root    119234 Mar  5 03:46 pnpm-lock.yaml
+-rw-r--r--     1 root root        80 Mar  5 03:46 postcss.config.js
+drwxr-xr-x     7 root root     24576 Mar  5 07:04 public
+drwxr-xr-x     5 root root     16384 Mar  5 07:04 src
+-rw-r--r--     1 root root       170 Mar  5 03:46 tailwind.config.js
+-rw-r--r--     1 root root      1160 Mar  5 03:46 template_config.json
+-rw-r--r--     1 root root       163 Mar  5 03:46 vite.config.js

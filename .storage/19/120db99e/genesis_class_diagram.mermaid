@@ -1,0 +1,397 @@
+classDiagram
+    class User {
+        +String id
+        +String username
+        +String email
+        +UserProfile profile
+        +Library library
+        +LearningStats stats
+        +UserPreferences preferences
+        +DateTime createdAt
+        +DateTime updatedAt
+        +registerAccount()
+        +updateProfile()
+        +manageSubscription()
+        +getProgress()
+    }
+
+    class UserProfile {
+        +String displayName
+        +String avatar
+        +String bio
+        +LearningStyleEnum learningStyle
+        +List~Language~ languages
+        +List~String~ expertiseAreas
+        +PrivacySettings privacySettings
+        +updateLearningStyle()
+        +setPrivacyPreferences()
+    }
+
+    class UserPreferences {
+        +ThemeEnum theme
+        +String fontFamily
+        +Int fontSize
+        +Float lineSpacing
+        +String preferredVoice
+        +Float playbackSpeed
+        +Boolean autoSync
+        +NotificationSettings notificationSettings
+        +updateDisplaySettings()
+        +updatePlaybackSettings()
+    }
+
+    class Book {
+        +String id
+        +String title
+        +String author
+        +String coverImage
+        +String description
+        +BookMetadata metadata
+        +BookFormatEnum format
+        +BookContent content
+        +DateTime createdAt
+        +DateTime updatedAt
+        +AudioNarration audioNarration
+        +processBook()
+        +generateAudio()
+        +createLearningMaterials()
+    }
+
+    class BookContent {
+        +List~BookSection~ sections
+        +Int totalPages
+        +Int wordCount
+        +Int readingTime
+        +ComplexityScore complexity
+        +extractContent()
+        +analyzeSections()
+        +calculateReadingMetrics()
+    }
+
+    class BookSection {
+        +String id
+        +String title
+        +String content
+        +List~Image~ images
+        +List~Table~ tables
+        +List~Footnote~ footnotes
+        +AudioSegment audioSegment
+        +getTextContent()
+        +getAudioSegment()
+        +getSynchronizationPoints()
+    }
+
+    class AudioNarration {
+        +String id
+        +String bookId
+        +VoiceType voice
+        +Float duration
+        +List~AudioSegment~ segments
+        +DateTime createdAt
+        +generateAudio()
+        +streamAudio()
+        +getSegmentByPosition()
+    }
+
+    class AudioSegment {
+        +String id
+        +String narrationId
+        +String sectionId
+        +Float startTime
+        +Float endTime
+        +String audioUrl
+        +List~SyncMarker~ syncMarkers
+        +play()
+        +pause()
+        +seekToPosition()
+        +getTextSync()
+    }
+
+    class Annotation {
+        +String id
+        +String bookId
+        +String sectionId
+        +User user
+        +String content
+        +AnnotationTypeEnum annotationType
+        +TextPosition position
+        +DateTime createdAt
+        +DateTime updatedAt
+        +Boolean isShared
+        +List~User~ sharedWith
+        +createAnnotation()
+        +updateContent()
+        +shareWith()
+        +delete()
+    }
+
+    class LearningMaterials {
+        +List~Quiz~ quizzes
+        +List~Flashcard~ flashcards
+        +List~MindMap~ mindMaps
+        +List~Summary~ summaries
+        +List~Discussion~ discussions
+        +generateQuiz()
+        +createFlashcards()
+        +buildMindMap()
+        +generateSummary()
+    }
+
+    class Quiz {
+        +String id
+        +String title
+        +List~QuizQuestion~ questions
+        +DifficultyEnum difficulty
+        +List~QuizCompletion~ completions
+        +DateTime createdAt
+        +generateQuestions()
+        +evaluate()
+        +adaptDifficulty()
+    }
+
+    class QuizQuestion {
+        +String id
+        +String quizId
+        +String questionText
+        +List~String~ options
+        +Int correctOptionIndex
+        +String explanation
+        +checkAnswer()
+        +provideHint()
+    }
+
+    class MindMap {
+        +String id
+        +String title
+        +String centralConcept
+        +List~MindMapNode~ nodes
+        +List~MindMapEdge~ edges
+        +DateTime createdAt
+        +DateTime updatedAt
+        +generateFromText()
+        +addNode()
+        +connectNodes()
+        +exportMap()
+    }
+
+    class MindMapNode {
+        +String id
+        +String mindMapId
+        +String label
+        +NodeType type
+        +Position position
+        +String textReference
+        +updateLabel()
+        +movePosition()
+    }
+
+    class Flashcard {
+        +String id
+        +String term
+        +String definition
+        +List~String~ examples
+        +List~Media~ mediaItems
+        +FlashcardStatus status
+        +DateTime nextReviewDate
+        +createCard()
+        +review()
+        +updateSchedule()
+    }
+
+    class Conversation {
+        +String id
+        +String bookId
+        +List~ConversationMessage~ messages
+        +DateTime createdAt
+        +DateTime updatedAt
+        +startConversation()
+        +sendMessage()
+        +analyzeContext()
+    }
+
+    class ConversationMessage {
+        +String id
+        +String conversationId
+        +String content
+        +MessageSenderEnum sender
+        +DateTime timestamp
+        +List~TextReference~ referencedContent
+        +generateResponse()
+        +addReference()
+    }
+
+    class BookClub {
+        +String id
+        +String name
+        +String description
+        +List~Book~ books
+        +List~User~ members
+        +List~Discussion~ discussions
+        +List~Meeting~ meetings
+        +User createdBy
+        +DateTime createdAt
+        +DateTime updatedAt
+        +createClub()
+        +inviteMember()
+        +scheduleMeeting()
+        +startDiscussion()
+    }
+
+    class Discussion {
+        +String id
+        +String title
+        +String content
+        +User author
+        +List~Comment~ comments
+        +String bookId
+        +String bookClubId
+        +DateTime createdAt
+        +DateTime updatedAt
+        +postDiscussion()
+        +addComment()
+        +pinDiscussion()
+    }
+
+    class Meeting {
+        +String id
+        +String title
+        +String description
+        +DateTime startTime
+        +DateTime endTime
+        +String bookClubId
+        +List~User~ attendees
+        +String videoConferenceLink
+        +List~Resource~ resources
+        +scheduleMeeting()
+        +joinMeeting()
+        +addResources()
+    }
+
+    class DocumentProcessor {
+        +supportedFormats
+        +convertFormat()
+        +extractText()
+        +preserveStructure()
+        +processImages()
+        +handleOCR()
+    }
+
+    class TextAnalysisEngine {
+        +analyzeContent()
+        +extractEntities()
+        +identifyThemes()
+        +assessComplexity()
+        +generateMetadata()
+    }
+
+    class VoiceSynthesizer {
+        +List~VoiceModel~ availableVoices
+        +analyzeTextContext()
+        +selectVoice()
+        +generateAudioSegment()
+        +createSyncMarkers()
+    }
+
+    class ConversationalAI {
+        +initializeConversation()
+        +processUserQuery()
+        +retrieveContext()
+        +generateResponse()
+        +maintainHistory()
+    }
+
+    class LearningContentGenerator {
+        +generateQuizQuestions()
+        +createMindMapStructure()
+        +buildFlashcards()
+        +createSummaries()
+        +adaptToPerformance()
+    }
+
+    class LanguageLearningEngine {
+        +analyzeGrammar()
+        +assessPronunciation()
+        +generateExercises()
+        +buildVocabularyList()
+        +trackProficiency()
+    }
+
+    class SubscriptionManager {
+        +List~SubscriptionTier~ tiers
+        +createSubscription()
+        +processPayment()
+        +manageAccess()
+        +handleUpgrade()
+    }
+
+    class CreatorPlatform {
+        +createLearningPath()
+        +publishContent()
+        +trackEngagement()
+        +manageRevenue()
+        +collaborateWithUsers()
+    }
+
+    class EnterpriseManager {
+        +deployToOrganization()
+        +integrateWithLMS()
+        +customizeBranding()
+        +generateReports()
+        +manageUsers()
+    }
+
+    class AuthenticationService {
+        +registerUser()
+        +authenticateUser()
+        +manageSession()
+        +implementMFA()
+        +integrateSSO()
+    }
+
+    class SearchEngine {
+        +indexContent()
+        +performFullTextSearch()
+        +implementSemanticSearch()
+        +rankResults()
+        +filterByFacets()
+    }
+
+    % Relationships
+    User "1" -- "1" UserProfile : has
+    User "1" -- "1" UserPreferences : has
+    User "1" -- "*" Book : owns
+    User "1" -- "*" Annotation : creates
+    User "1" -- "*" BookClub : participates in
+    User "1" -- "*" Discussion : authors
+
+    Book "1" -- "1" BookContent : contains
+    Book "1" -- "1" AudioNarration : has
+    Book "1" -- "1" LearningMaterials : generates
+
+    BookContent "1" -- "*" BookSection : divided into
+    BookSection "1" -- "1" AudioSegment : synchronized with
+
+    LearningMaterials "1" -- "*" Quiz : contains
+    LearningMaterials "1" -- "*" MindMap : contains
+    LearningMaterials "1" -- "*" Flashcard : contains
+
+    Quiz "1" -- "*" QuizQuestion : consists of
+
+    MindMap "1" -- "*" MindMapNode : has
+
+    BookClub "1" -- "*" Discussion : hosts
+    BookClub "1" -- "*" Meeting : schedules
+
+    DocumentProcessor -- Book : processes
+    TextAnalysisEngine -- BookContent : analyzes
+    VoiceSynthesizer -- AudioNarration : generates
+    ConversationalAI -- Conversation : powers
+    LearningContentGenerator -- LearningMaterials : creates
+    LanguageLearningEngine -- Book : enhances
+
+    SubscriptionManager -- User : manages access for
+    CreatorPlatform -- User : empowers
+    EnterpriseManager -- BookClub : organizes
+
+    AuthenticationService -- User : authenticates
+    SearchEngine -- Book : indexes

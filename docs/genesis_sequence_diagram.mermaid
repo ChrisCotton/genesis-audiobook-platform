@@ -1,0 +1,153 @@
+sequenceDiagram
+    participant User
+    participant Client as Client Application
+    participant API as API Gateway
+    participant Auth as AuthenticationService
+    participant DocProc as DocumentProcessor
+    participant ContentMgr as ContentManagementService
+    participant TextAnalysis as TextAnalysisEngine
+    participant VoiceSynth as VoiceSynthesizer
+    participant LearnGen as LearningContentGenerator
+    participant BookCat as BookCatalogService
+    participant ReadExp as ReadingExperienceService
+    participant ConvAI as ConversationalAI
+    participant Analytics as AnalyticsService
+    
+    %% Book Upload and Processing Flow
+    User->>Client: Upload digital book
+    Client->>API: POST /api/books/upload
+    API->>Auth: Authenticate request
+    Auth-->>API: Authentication successful
+    API->>DocProc: Process book file
+    DocProc->>DocProc: Validate format
+    DocProc->>DocProc: Extract text & structure
+    DocProc->>ContentMgr: Store processed content
+    ContentMgr-->>DocProc: Content stored
+    DocProc-->>API: Processing complete
+    
+    API->>TextAnalysis: Analyze book content
+    TextAnalysis->>TextAnalysis: Extract entities & themes
+    TextAnalysis->>TextAnalysis: Assess complexity & readability
+    TextAnalysis->>ContentMgr: Store analysis results
+    ContentMgr-->>TextAnalysis: Results stored
+    TextAnalysis-->>API: Analysis complete
+    
+    API->>VoiceSynth: Generate audio narration
+    VoiceSynth->>VoiceSynth: Select appropriate voice
+    VoiceSynth->>VoiceSynth: Generate audio segments
+    VoiceSynth->>VoiceSynth: Create synchronization markers
+    VoiceSynth->>ContentMgr: Store audio segments
+    ContentMgr-->>VoiceSynth: Audio stored
+    VoiceSynth-->>API: Audio generation complete
+    
+    API->>LearnGen: Generate learning materials
+    LearnGen->>LearnGen: Create quizzes
+    LearnGen->>LearnGen: Generate mind maps
+    LearnGen->>LearnGen: Build flashcards
+    LearnGen->>LearnGen: Create summaries
+    LearnGen->>ContentMgr: Store learning materials
+    ContentMgr-->>LearnGen: Materials stored
+    LearnGen-->>API: Learning materials generated
+    
+    API->>BookCat: Update user's library
+    BookCat->>BookCat: Add book to user's catalog
+    BookCat-->>API: Library updated
+    API-->>Client: Book processing complete
+    Client-->>User: Notification: Book ready
+    
+    %% Reading and Learning Flow
+    User->>Client: Select book from library
+    Client->>API: GET /api/books/{bookId}
+    API->>Auth: Authenticate request
+    Auth-->>API: Authentication successful
+    API->>ReadExp: Request book content
+    ReadExp->>ContentMgr: Get processed content
+    ContentMgr-->>ReadExp: Return book content
+    ReadExp->>ContentMgr: Get audio narration
+    ContentMgr-->>ReadExp: Return audio data
+    ReadExp->>ContentMgr: Get sync data
+    ContentMgr-->>ReadExp: Return sync markers
+    ReadExp->>ContentMgr: Get user annotations
+    ContentMgr-->>ReadExp: Return annotations
+    ReadExp-->>API: Return compiled book experience
+    API-->>Client: Book content and resources
+    Client-->>User: Display interactive book
+    
+    %% User Interaction with Content
+    User->>Client: Toggle between reading/listening
+    Client->>Client: Sync text highlighting with audio
+    
+    User->>Client: Create annotation
+    Client->>API: POST /api/books/{bookId}/annotations
+    API->>Auth: Authenticate request
+    Auth-->>API: Authentication successful
+    API->>ContentMgr: Store annotation
+    ContentMgr-->>API: Annotation stored
+    API-->>Client: Annotation created
+    Client-->>User: Display annotation
+    
+    User->>Client: Access learning tools
+    Client->>API: GET /api/books/{bookId}/learning
+    API->>Auth: Authenticate request
+    Auth-->>API: Authentication successful
+    API->>ContentMgr: Get learning materials
+    ContentMgr-->>API: Return materials
+    API-->>Client: Learning materials
+    Client-->>User: Display quizzes, mind maps, etc.
+    
+    %% Conversation with AI
+    User->>Client: Ask question about book
+    Client->>API: POST /api/books/{bookId}/conversation
+    API->>Auth: Authenticate request
+    Auth-->>API: Authentication successful
+    API->>ConvAI: Process user query
+    ConvAI->>ContentMgr: Get book context
+    ContentMgr-->>ConvAI: Return relevant content
+    ConvAI->>ConvAI: Generate response
+    ConvAI-->>API: AI response
+    API-->>Client: Conversation response
+    Client-->>User: Display AI answer
+    
+    %% Social and Sharing
+    User->>Client: Share annotation with book club
+    Client->>API: PUT /api/annotations/{annotationId}/share
+    API->>Auth: Authenticate request
+    Auth-->>API: Authentication successful
+    API->>ContentMgr: Update sharing permissions
+    ContentMgr-->>API: Permissions updated
+    API-->>Client: Sharing successful
+    Client-->>User: Confirmation message
+    
+    %% Analytics Tracking
+    Client->>API: POST /api/analytics/event
+    API->>Analytics: Record user interaction
+    Analytics->>Analytics: Process event data
+    Analytics->>ContentMgr: Store analytics data
+    ContentMgr-->>Analytics: Data stored
+    Analytics-->>API: Analytics recorded
+    
+    %% Book Club and Discussion
+    User->>Client: Create book club meeting
+    Client->>API: POST /api/bookclubs/{clubId}/meetings
+    API->>Auth: Authenticate request
+    Auth-->>API: Authentication successful
+    API->>ContentMgr: Store meeting details
+    ContentMgr-->>API: Meeting created
+    API-->>Client: Meeting scheduled
+    Client-->>User: Confirmation & calendar invite
+    
+    %% Language Learning (Phase 2+)
+    User->>Client: Enable language learning for book
+    Client->>API: POST /api/books/{bookId}/language-learning
+    API->>Auth: Authenticate request
+    Auth-->>API: Authentication successful
+    API->>LearnGen: Generate language exercises
+    LearnGen->>TextAnalysis: Analyze grammar structures
+    TextAnalysis-->>LearnGen: Grammar analysis
+    LearnGen->>LearnGen: Create pronunciation exercises
+    LearnGen->>LearnGen: Build vocabulary lists
+    LearnGen->>ContentMgr: Store language learning materials
+    ContentMgr-->>LearnGen: Materials stored
+    LearnGen-->>API: Language materials ready
+    API-->>Client: Language learning enabled
+    Client-->>User: Language learning interface
