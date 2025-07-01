@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import BookView from './pages/BookView';
 import LibraryPage from './pages/LibraryPage';
 import AuthPage from './pages/AuthPage';
+import DatabaseTest from './components/DatabaseTest';
 import { AuthProvider } from './contexts/AuthContext';
 import { BookProvider } from './contexts/BookContext';
 
@@ -42,6 +43,7 @@ function App() {
               <Route index element={<Dashboard />} />
               <Route path="library" element={<LibraryPage />} />
               <Route path="book/:bookId" element={<BookView />} />
+              <Route path="database-test" element={<DatabaseTest />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

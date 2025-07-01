@@ -3,24 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useBook } from '../contexts/BookContext';
 import BookCard from '../components/book/BookCard';
+import FileUpload from '../components/book/FileUpload';
 
 function LibraryPage() {
   const { currentUser } = useAuth();
-  const { books, loading, addBook } = useBook();
+  const { books, loading, loadBooks } = useBook();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadForm, setUploadForm] = useState({
-    title: '',
-    author: '',
-    description: '',
-    file: null,
-    coverImage: null,
-    totalPages: 0
-  });
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState('');
+  const [uploadMessage, setUploadMessage] = useState('');
+  const [uploadMessageType, setUploadMessageType] = useState(''); // 'success' or 'error'
 
   // Redirect to auth if not logged in
   useEffect(() => {
@@ -42,72 +35,30 @@ function LibraryPage() {
     return matchesSearch;
   });
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Extract information from filename for demo purposes
-      const filename = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
-      const parts = filename.split('-');
-      
-      setUploadForm(prev => ({
-        ...prev,
-        file: file,
-        title: parts[0] ? parts[0].trim() : filename,
-        author: parts[1] ? parts[1].trim() : 'Unknown Author',
-        totalPages: Math.floor(Math.random() * 300) + 100, // Random page count for demo
-      }));
-    }
+  const handleUploadSuccess = async (result) => {
+    setUploadMessage(`Successfully uploaded "${result.title}" with ${result.chapters} chapters!`);
+    setUploadMessageType('success');
+    setShowUploadModal(false);
+    
+    // Reload books to show the new upload
+    await loadBooks();
+    
+    // Clear message after 5 seconds
+    setTimeout(() => {
+      setUploadMessage('');
+      setUploadMessageType('');
+    }, 5000);
   };
 
-  const handleCoverImageChange = (e) => {
-    const file = e.target.files[0];
-    setUploadForm(prev => ({
-      ...prev,
-      coverImage: file
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setUploadError('');
+  const handleUploadError = (error) => {
+    setUploadMessage(error);
+    setUploadMessageType('error');
     
-    if (!uploadForm.title || !uploadForm.author || !uploadForm.file) {
-      setUploadError('Please fill in all required fields');
-      return;
-    }
-    
-    setIsUploading(true);
-    
-    try {
-      // Simulate book upload and processing
-      const newBook = {
-        title: uploadForm.title,
-        author: uploadForm.author,
-        description: uploadForm.description || 'No description provided.',
-        coverImage: null, // In a real app, you'd upload and get a URL
-        totalPages: uploadForm.totalPages,
-        hasAudioNarration: false, // Would be generated in a real app
-        tags: []
-      };
-      
-      await addBook(newBook);
-      
-      // Reset form and close modal
-      setUploadForm({
-        title: '',
-        author: '',
-        description: '',
-        file: null,
-        coverImage: null,
-        totalPages: 0
-      });
-      setShowUploadModal(false);
-    } catch (error) {
-      console.error('Error uploading book:', error);
-      setUploadError('Failed to upload book. Please try again.');
-    } finally {
-      setIsUploading(false);
-    }
+    // Clear error message after 5 seconds
+    setTimeout(() => {
+      setUploadMessage('');
+      setUploadMessageType('');
+    }, 5000);
   };
 
   if (loading) {
@@ -120,6 +71,28 @@ function LibraryPage() {
 
   return (
     <div>
+      {/* Upload Success/Error Message */}
+      {uploadMessage && (
+        <div className={`mb-4 p-4 rounded-lg ${
+          uploadMessageType === 'success' 
+            ? 'bg-green-50 border border-green-200 text-green-800' 
+            : 'bg-red-50 border border-red-200 text-red-800'
+        }`}>
+          <div className="flex items-center">
+            {uploadMessageType === 'success' ? (
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            )}
+            {uploadMessage}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
@@ -198,153 +171,43 @@ function LibraryPage() {
             <>
               <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">Your library is empty</h3>
-              <p className="text-gray-600 mb-6">
-                Add your first book to get started with Genesis
-              </p>
+              <p className="text-gray-600 mb-4">Start building your collection by uploading your first book</p>
               <button 
                 onClick={() => setShowUploadModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-md transition-colors duration-200"
+                className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-200"
               >
-                Add Your First Book
+                Upload Your First Book
               </button>
             </>
           )}
         </div>
       )}
-      
-      {/* Upload modal */}
+
+      {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h2 className="text-xl font-semibold">Upload New Book</h2>
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
             <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">Upload New Book</h2>
-                <button 
-                  onClick={() => setShowUploadModal(false)}
-                  className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              {uploadError && (
-                <div className="mb-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-4">
-                  <p>{uploadError}</p>
-                </div>
-              )}
-              
-              <form onSubmit={handleSubmit}>
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="bookFile" className="block text-sm font-medium text-gray-700 mb-1">
-                      Book File (PDF, EPUB, etc.)*
-                    </label>
-                    <input
-                      type="file"
-                      id="bookFile"
-                      accept=".pdf,.epub,.mobi,.txt"
-                      onChange={handleFileChange}
-                      className="w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-md file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="bookTitle" className="block text-sm font-medium text-gray-700 mb-1">
-                      Title*
-                    </label>
-                    <input
-                      type="text"
-                      id="bookTitle"
-                      value={uploadForm.title}
-                      onChange={(e) => setUploadForm(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="bookAuthor" className="block text-sm font-medium text-gray-700 mb-1">
-                      Author*
-                    </label>
-                    <input
-                      type="text"
-                      id="bookAuthor"
-                      value={uploadForm.author}
-                      onChange={(e) => setUploadForm(prev => ({ ...prev, author: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="bookDescription" className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      id="bookDescription"
-                      value={uploadForm.description}
-                      onChange={(e) => setUploadForm(prev => ({ ...prev, description: e.target.value }))}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700 mb-1">
-                      Cover Image (optional)
-                    </label>
-                    <input
-                      type="file"
-                      id="coverImage"
-                      accept="image/*"
-                      onChange={handleCoverImageChange}
-                      className="w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-md file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100"
-                    />
-                  </div>
-                </div>
-                
-                <div className="mt-6 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowUploadModal(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isUploading}
-                    className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                  >
-                    {isUploading ? (
-                      <div className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Uploading...
-                      </div>
-                    ) : 'Upload Book'}
-                  </button>
-                </div>
-              </form>
+              <FileUpload 
+                onUploadSuccess={handleUploadSuccess}
+                onUploadError={handleUploadError}
+              />
             </div>
           </div>
         </div>
