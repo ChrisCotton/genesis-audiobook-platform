@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { supabase } from '../../config/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 function BookViewer({ book, onProgressUpdate }) {
+  const { currentUser } = useAuth();
   const [isAudioMode, setIsAudioMode] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -12,51 +15,112 @@ function BookViewer({ book, onProgressUpdate }) {
   const [audioProgress, setAudioProgress] = useState(0);
   const [volume, setVolume] = useState(80);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [chapters, setChapters] = useState([]);
+  const [currentChapter, setCurrentChapter] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const audioRef = useRef(null);
   const contentRef = useRef(null);
 
-  // Sample book content (would come from API in real app)
-  const bookContent = {
-    1: {
-      content: `<h2>Chapter 1: Introduction</h2>
-        <p>The concept of innovation has never been more central to business success than it is today. In an era of rapid technological advancement, shifting consumer behaviors, and global competition, companies must innovate to survive.</p>
-        <p>Yet for many established businesses, the very capabilities that led to their success create barriers to innovation that eventually contribute to their downfall. This paradox stands at the heart of what we call the innovator's dilemma.</p>
-        <p>This book explores why great companies can do everything "right" and still lose their market leadership—or even fail—as new, unexpected competitors rise and take over the market. The answer doesn't lie in conventional management wisdom; it requires an entirely new approach.</p>`,
-      audioUrl: null
-    },
-    2: {
-      content: `<h2>Chapter 1: Introduction (continued)</h2>
-        <p>The fundamental principles of good management that are taught in business schools—listen to customers, invest in improvements that provide customers more and better of what they want, seek higher margins—can lead established companies to miss disruptive innovations.</p>
-        <p>These disruptive innovations often initially result in worse performance according to traditional metrics. They start by offering a different package of attributes valued only in emerging markets remote from, and unimportant to, the mainstream.</p>
-        <p>This book introduces a framework for understanding when established companies should continue to follow traditional management practices, and when they should adopt an alternative set of principles.</p>`,
-      audioUrl: null
-    },
-    3: {
-      content: `<h2>Chapter 2: How Can Great Firms Fail?</h2>
-        <p>The history of business is filled with examples of once-dominant companies that failed to adapt to technological or market changes. From the mechanical excavator industry to disk drives, we can observe patterns that repeat across industries and time periods.</p>
-        <p>While these failures are often attributed to bureaucracy, complacency, or poor management, a deeper analysis reveals that even well-managed companies making seemingly rational decisions can still fail when facing certain types of market and technological change.</p>
-        <p>The patterns of innovation we will explore show that there is something about the way decisions get made in successful organizations that sows the seeds of eventual failure.</p>`,
-      audioUrl: null
-    }
-  };
-
-  const totalPages = book.totalPages || Object.keys(bookContent).length || 3;
-
-  // Set initial page based on progress
+  // Load book chapters and reading progress
   useEffect(() => {
-    if (book.progress > 0) {
-      const estimatedPage = Math.ceil((book.progress / 100) * totalPages);
-      setCurrentPage(estimatedPage > totalPages ? totalPages : estimatedPage);
-    }
-  }, [book.progress, totalPages]);
+    const loadBookData = async () => {
+      if (!book?.id) return;
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Load chapters
+        const { data: chaptersData, error: chaptersError } = await supabase
+          .from('chapters')
+          .select('*')
+          .eq('book_id', book.id)
+          .order('chapter_number');
+        
+        if (chaptersError) throw chaptersError;
+        
+        setChapters(chaptersData || []);
+        
+        // Load user's reading progress
+        if (currentUser) {
+          const { data: progressData, error: progressError } = await supabase
+            .from('reading_progress')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .eq('book_id', book.id)
+            .single();
+          
+          if (progressError && progressError.code !== 'PGRST116') {
+            console.error('Error loading progress:', progressError);
+          }
+          
+          if (progressData) {
+            // Find the chapter and calculate page
+            const chapterIndex = chaptersData.findIndex(ch => ch.id === progressData.chapter_id);
+            if (chapterIndex >= 0) {
+              setCurrentPage(chapterIndex + 1);
+              setCurrentChapter(chaptersData[chapterIndex]);
+            }
+          }
+        }
+        
+        // Set initial chapter if no progress found
+        if (chaptersData.length > 0 && !currentChapter) {
+          setCurrentChapter(chaptersData[0]);
+          setCurrentPage(1);
+        }
+        
+      } catch (err) {
+        console.error('Error loading book data:', err);
+        setError('Failed to load book content. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadBookData();
+  }, [book?.id, currentUser]);
 
-  // Update progress when page changes
+  // Update reading progress when page changes
   useEffect(() => {
-    const newProgress = Math.round((currentPage / totalPages) * 100);
-    if (newProgress !== book.progress) {
-      onProgressUpdate(newProgress > 100 ? 100 : newProgress);
-    }
-  }, [currentPage, totalPages, book.progress, onProgressUpdate]);
+    if (!currentUser || !book?.id || !currentChapter) return;
+    
+    const updateProgress = async () => {
+      const progressPercentage = Math.round((currentPage / chapters.length) * 100);
+      
+      try {
+        const { error } = await supabase
+          .from('reading_progress')
+          .upsert({
+            user_id: currentUser.id,
+            book_id: book.id,
+            chapter_id: currentChapter.id,
+            paragraph_index: 0,
+            character_position: 0,
+            progress_percentage: progressPercentage,
+            reading_mode: isAudioMode ? 'audio' : 'text',
+            last_read_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,book_id'
+          });
+        
+        if (error) {
+          console.error('Error updating progress:', error);
+        } else {
+          onProgressUpdate(progressPercentage);
+        }
+      } catch (err) {
+        console.error('Error updating reading progress:', err);
+      }
+    };
+    
+    // Debounce progress updates
+    const timeoutId = setTimeout(updateProgress, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, currentChapter, isAudioMode, currentUser, book?.id, chapters.length, onProgressUpdate]);
+
+  const totalPages = chapters.length;
 
   // Toggle between reading and listening modes
   const toggleAudioMode = () => {
@@ -86,7 +150,10 @@ function BookViewer({ book, onProgressUpdate }) {
     if (newPage < 1) newPage = 1;
     if (newPage > totalPages) newPage = totalPages;
     
-    setCurrentPage(newPage);
+    if (newPage !== currentPage && chapters[newPage - 1]) {
+      setCurrentPage(newPage);
+      setCurrentChapter(chapters[newPage - 1]);
+    }
   };
 
   // Handle text selection for annotations
@@ -104,20 +171,34 @@ function BookViewer({ book, onProgressUpdate }) {
   };
 
   // Add annotation
-  const addAnnotation = () => {
-    if (annotationText) {
-      const newAnnotation = {
-        id: annotations.length + 1,
-        text: annotationText,
-        highlight: highlightedText,
-        page: currentPage,
-        createdAt: new Date().toISOString(),
-      };
+  const addAnnotation = async () => {
+    if (!annotationText || !currentUser || !currentChapter) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('annotations')
+        .insert({
+          book_id: book.id,
+          chapter_id: currentChapter.id,
+          user_id: currentUser.id,
+          start_position: 0, // For now, simplified
+          end_position: highlightedText.length,
+          selected_text: highlightedText || 'Chapter annotation',
+          note_text: annotationText,
+          highlight_color: 'yellow',
+          annotation_type: 'note'
+        })
+        .select()
+        .single();
       
-      setAnnotations([...annotations, newAnnotation]);
+      if (error) throw error;
+      
+      setAnnotations([...annotations, data]);
       setAnnotationText('');
       setHighlightedText('');
       setShowAnnotationPanel(false);
+    } catch (err) {
+      console.error('Error adding annotation:', err);
     }
   };
 
@@ -138,13 +219,66 @@ function BookViewer({ book, onProgressUpdate }) {
     }
   };
 
+  // Format chapter content for display
+  const formatChapterContent = (content) => {
+    if (!content) return 'Content not available';
+    
+    // Split content into paragraphs and wrap in HTML
+    const paragraphs = content.split('\n\n').filter(p => p.trim());
+    return paragraphs
+      .map(p => `<p class="mb-4">${p.trim()}</p>`)
+      .join('');
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading book content...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="text-red-600 mb-4">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-gray-600">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!chapters.length) {
+    return (
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-gray-600">No content available for this book.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       {/* Audio element (hidden) */}
-      {book.hasAudioNarration && (
+      {currentChapter?.audio_url && (
         <audio
           ref={audioRef}
-          src={bookContent[currentPage]?.audioUrl || ""}
+          src={currentChapter.audio_url}
           onTimeUpdate={() => audioRef.current && setAudioProgress((audioRef.current.currentTime / audioRef.current.duration) * 100)}
           onEnded={() => setIsPlaying(false)}
         />
@@ -191,7 +325,7 @@ function BookViewer({ book, onProgressUpdate }) {
             <button
               onClick={() => setIsAudioMode(true)}
               className={`px-3 py-1 text-xs font-medium rounded-full ${isAudioMode ? 'bg-blue-600 text-white' : 'text-gray-700'}`}
-              disabled={!book.hasAudioNarration}
+              disabled={!currentChapter?.audio_url}
             >
               Listen
             </button>
@@ -212,72 +346,76 @@ function BookViewer({ book, onProgressUpdate }) {
       
       {/* Book content display */}
       <div className="flex">
-        {/* Main content area */}
-        <div className={`flex-grow ${showAnnotationPanel ? 'w-2/3' : 'w-full'}`}>
-          {/* Audio player controls (shown in audio mode) */}
-          {isAudioMode && book.hasAudioNarration && (
-            <div className="bg-gray-50 p-4 border-b">
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={togglePlayPause}
-                  className="bg-blue-600 text-white rounded-full p-3 hover:bg-blue-700"
-                  aria-label={isPlaying ? "Pause" : "Play"}
-                >
-                  {isPlaying ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </button>
-                
-                <div className="flex-grow">
-                  <div className="bg-gray-300 h-2 rounded-full">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full"
-                      style={{ width: `${audioProgress}%` }}
-                    ></div>
+        <div className="flex-1">
+          {/* Chapter title */}
+          {currentChapter && (
+            <div className="px-8 pt-6 pb-2">
+              <h2 className="text-xl font-semibold text-gray-800">
+                {currentChapter.title}
+              </h2>
+              {currentChapter.estimated_reading_time && (
+                <p className="text-sm text-gray-600 mt-1">
+                  ~{currentChapter.estimated_reading_time} min read
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Audio controls (when in audio mode) */}
+          {isAudioMode && currentChapter?.audio_url && (
+            <div className="px-8 pb-4">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <button
+                    onClick={togglePlayPause}
+                    className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    {isPlaying ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                    <span>{isPlaying ? 'Pause' : 'Play'}</span>
+                  </button>
+                  
+                  <div className="flex items-center space-x-4">
+                    {/* Playback rate */}
+                    <div className="flex items-center space-x-1">
+                      <span className="text-xs text-gray-600">Speed:</span>
+                      <select
+                        value={playbackRate}
+                        onChange={(e) => handlePlaybackRateChange(parseFloat(e.target.value))}
+                        className="text-xs border border-gray-300 rounded px-1 py-0.5"
+                      >
+                        <option value={0.5}>0.5x</option>
+                        <option value={0.75}>0.75x</option>
+                        <option value={1}>1x</option>
+                        <option value={1.25}>1.25x</option>
+                        <option value={1.5}>1.5x</option>
+                        <option value={2}>2x</option>
+                      </select>
+                    </div>
+                    
+                    {/* Volume */}
+                    <div className="flex items-center space-x-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                      </svg>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={volume}
+                        onChange={handleVolumeChange}
+                        className="w-20"
+                        aria-label="Volume"
+                      />
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <button
-                    onClick={() => handlePlaybackRateChange(Math.max(0.5, playbackRate - 0.25))}
-                    className="text-gray-600 hover:text-gray-800"
-                    aria-label="Decrease playback speed"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                  <span className="text-xs text-gray-700 mx-2">{playbackRate}x</span>
-                  <button
-                    onClick={() => handlePlaybackRateChange(Math.min(2, playbackRate + 0.25))}
-                    className="text-gray-600 hover:text-gray-800"
-                    aria-label="Increase playback speed"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-                
-                <div className="flex items-center space-x-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
-                  </svg>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={volume}
-                    onChange={handleVolumeChange}
-                    className="w-20"
-                    aria-label="Volume"
-                  />
                 </div>
               </div>
             </div>
@@ -288,76 +426,69 @@ function BookViewer({ book, onProgressUpdate }) {
             ref={contentRef}
             className="p-8 max-h-[70vh] overflow-y-auto prose prose-lg mx-auto"
             onMouseUp={handleTextSelection}
-            dangerouslySetInnerHTML={{ __html: bookContent[currentPage]?.content || 'Content not available' }}
+            dangerouslySetInnerHTML={{ 
+              __html: formatChapterContent(currentChapter?.content)
+            }}
           ></div>
         </div>
         
         {/* Annotation panel (conditionally rendered) */}
         {showAnnotationPanel && (
-          <div className="w-1/3 border-l border-gray-200 p-4 bg-gray-50">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-gray-800">Notes & Highlights</h3>
-              <button
-                onClick={() => setShowAnnotationPanel(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </div>
+          <div className="w-80 bg-gray-50 border-l p-4">
+            <h3 className="text-lg font-semibold mb-4">Add Annotation</h3>
             
             {highlightedText && (
-              <div className="mb-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                <p className="text-sm font-medium text-gray-700">{highlightedText}</p>
+              <div className="mb-3 p-2 bg-yellow-100 border-l-4 border-yellow-400">
+                <p className="text-sm text-gray-700">Selected text:</p>
+                <p className="text-sm font-medium">"{highlightedText}"</p>
               </div>
             )}
             
-            <div className="mb-4">
-              <textarea
-                className="w-full border border-gray-300 rounded-md p-2 text-sm"
-                placeholder="Add a note..."
-                rows="3"
-                value={annotationText}
-                onChange={(e) => setAnnotationText(e.target.value)}
-              ></textarea>
-              <div className="flex justify-end mt-2">
-                <button
-                  onClick={addAnnotation}
-                  disabled={!annotationText}
-                  className={`px-3 py-1 rounded text-sm font-medium ${annotationText ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
-                >
-                  Save Note
-                </button>
-              </div>
+            <textarea
+              value={annotationText}
+              onChange={(e) => setAnnotationText(e.target.value)}
+              placeholder="Add your note..."
+              className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-3"
+            />
+            
+            <div className="flex space-x-2">
+              <button
+                onClick={addAnnotation}
+                disabled={!annotationText}
+                className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                Save Note
+              </button>
+              <button
+                onClick={() => {
+                  setShowAnnotationPanel(false);
+                  setAnnotationText('');
+                  setHighlightedText('');
+                }}
+                className="flex-1 bg-gray-300 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-400"
+              >
+                Cancel
+              </button>
             </div>
             
-            <div className="border-t border-gray-200 pt-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Your Notes</h4>
-              
-              {annotations.length > 0 ? (
-                <div className="space-y-3">
-                  {annotations
-                    .filter(a => a.page === currentPage)
-                    .map(annotation => (
-                      <div key={annotation.id} className="bg-white border border-gray-200 rounded-md p-3">
-                        {annotation.highlight && (
-                          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-2 mb-2 text-xs text-gray-700">
-                            "{annotation.highlight}"
-                          </div>
-                        )}
-                        <p className="text-sm text-gray-800">{annotation.text}</p>
-                        <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-                          <span>Page {annotation.page}</span>
-                          <span>{new Date(annotation.createdAt).toLocaleString()}</span>
-                        </div>
-                      </div>
-                    ))}
+            {/* Show existing annotations */}
+            {annotations.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-md font-semibold mb-2">Your Notes</h4>
+                <div className="space-y-2">
+                  {annotations.map((annotation) => (
+                    <div key={annotation.id} className="p-2 bg-white rounded border text-sm">
+                      <p className="text-gray-700">{annotation.note_text}</p>
+                      {annotation.selected_text && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          "{annotation.selected_text}"
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <p className="text-sm text-gray-500">No notes for this page yet.</p>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>

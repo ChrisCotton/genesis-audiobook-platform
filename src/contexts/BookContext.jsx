@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+<<<<<<< HEAD
 import supabase from '../config/supabase';
+=======
+import { supabase } from '../config/supabase';
+>>>>>>> d0dfb41028177582b68f6cd95ada84723c483f41
 
 // Create book context
 const BookContext = createContext();
@@ -10,125 +14,6 @@ export function useBook() {
   return useContext(BookContext);
 }
 
-// Mock book data
-const MOCK_BOOKS = [
-  {
-    id: '1',
-    title: 'The Innovator\'s Dilemma',
-    author: 'Clayton Christensen',
-    description: 'A revolutionary business book that has changed corporate America forever.',
-    coverImage: '/assets/covers/innovators-dilemma.jpg',
-    progress: 35,
-    totalPages: 225,
-    uploadedBy: '1',
-    uploadedAt: new Date(2023, 4, 15).toISOString(),
-    lastOpened: new Date(2023, 5, 20).toISOString(),
-    hasAudioNarration: true,
-    tags: ['Business', 'Innovation', 'Technology']
-  },
-  {
-    id: '2',
-    title: 'Thinking, Fast and Slow',
-    author: 'Daniel Kahneman',
-    description: 'The renowned psychologist and winner of the Nobel Prize in Economics explains how we think.',
-    coverImage: '/assets/covers/thinking-fast-slow.jpg',
-    progress: 15,
-    totalPages: 499,
-    uploadedBy: '1',
-    uploadedAt: new Date(2023, 3, 5).toISOString(),
-    lastOpened: new Date(2023, 5, 10).toISOString(),
-    hasAudioNarration: true,
-    tags: ['Psychology', 'Decision Making', 'Behavioral Economics']
-  },
-  {
-    id: '3',
-    title: 'Atomic Habits',
-    author: 'James Clear',
-    description: 'An easy & proven way to build good habits & break bad ones.',
-    coverImage: '/assets/covers/atomic-habits.jpg',
-    progress: 70,
-    totalPages: 320,
-    uploadedBy: '1',
-    uploadedAt: new Date(2023, 2, 20).toISOString(),
-    lastOpened: new Date(2023, 5, 18).toISOString(),
-    hasAudioNarration: true,
-    tags: ['Self Help', 'Productivity', 'Psychology']
-  },
-  {
-    id: '4',
-    title: 'The Psychology of Money',
-    author: 'Morgan Housel',
-    description: 'Timeless lessons on wealth, greed, and happiness.',
-    coverImage: '/assets/covers/psychology-money.jpg',
-    progress: 0,
-    totalPages: 256,
-    uploadedBy: '1',
-    uploadedAt: new Date(2023, 5, 1).toISOString(),
-    lastOpened: null,
-    hasAudioNarration: false,
-    tags: ['Finance', 'Psychology', 'Personal Development']
-  }
-];
-
-// Mock quiz data (user's quizzes for each book)
-const MOCK_QUIZZES = [
-  {
-    id: '1',
-    bookId: '1',
-    title: 'Chapter 1-3 Quiz',
-    completedAt: new Date(2023, 5, 18).toISOString(),
-    score: 8,
-    totalQuestions: 10
-  },
-  {
-    id: '2',
-    bookId: '1',
-    title: 'Innovation Concepts Quiz',
-    completedAt: new Date(2023, 5, 19).toISOString(),
-    score: 7,
-    totalQuestions: 10
-  },
-  {
-    id: '3',
-    bookId: '3',
-    title: 'Habit Formation Basics',
-    completedAt: new Date(2023, 5, 20).toISOString(),
-    score: 10,
-    totalQuestions: 10
-  }
-];
-
-// Mock annotation data
-const MOCK_ANNOTATIONS = [
-  {
-    id: '1',
-    bookId: '1',
-    userId: '1',
-    content: 'This concept of disruptive innovation is crucial to understand in modern business!',
-    pageNumber: 42,
-    createdAt: new Date(2023, 5, 16).toISOString(),
-    color: 'yellow'
-  },
-  {
-    id: '2',
-    bookId: '1',
-    userId: '1',
-    content: 'Great example of how established companies can miss market shifts.',
-    pageNumber: 67,
-    createdAt: new Date(2023, 5, 17).toISOString(),
-    color: 'green'
-  },
-  {
-    id: '3',
-    bookId: '3',
-    userId: '1',
-    content: 'The 1% improvement concept is revolutionary for building habits.',
-    pageNumber: 23,
-    createdAt: new Date(2023, 5, 18).toISOString(),
-    color: 'blue'
-  }
-];
-
 export function BookProvider({ children }) {
   const { currentUser } = useAuth();
   const [books, setBooks] = useState([]);
@@ -136,26 +21,124 @@ export function BookProvider({ children }) {
   const [annotations, setAnnotations] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Load books from database
+  const loadBooks = async () => {
+    if (!currentUser) {
+      setBooks([]);
+      setUserQuizzes([]);
+      setAnnotations([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      // Fetch user's books
+      const { data: booksData, error: booksError } = await supabase
+        .from('books')
+        .select(`
+          *,
+          reading_progress(
+            progress_percentage,
+            last_read_at
+          )
+        `)
+        .eq('user_id', currentUser.id)
+        .eq('processing_status', 'completed')
+        .order('created_at', { ascending: false });
+
+      if (booksError) {
+        console.error('Error fetching books:', booksError);
+        throw booksError;
+      }
+
+      // Transform data to match the expected format
+      const transformedBooks = booksData.map(book => ({
+        id: book.id,
+        title: book.title,
+        author: book.author,
+        description: book.description,
+        coverImage: book.cover_image_url,
+        progress: book.reading_progress?.[0]?.progress_percentage || 0,
+        totalPages: book.pages,
+        uploadedBy: book.user_id,
+        uploadedAt: book.created_at,
+        lastOpened: book.reading_progress?.[0]?.last_read_at || null,
+        hasAudioNarration: false, // Will be updated when audio features are implemented
+        tags: book.tags || [],
+        language: book.language,
+        wordCount: book.word_count,
+        fileType: book.file_type
+      }));
+
+      setBooks(transformedBooks);
+
+      // Fetch user's quiz attempts
+      const { data: quizzesData, error: quizzesError } = await supabase
+        .from('quiz_attempts')
+        .select(`
+          id,
+          quiz_id,
+          score,
+          total_questions,
+          completed_at,
+          quizzes(
+            title,
+            book_id
+          )
+        `)
+        .eq('user_id', currentUser.id)
+        .order('completed_at', { ascending: false });
+
+      if (quizzesError) {
+        console.error('Error fetching quizzes:', quizzesError);
+      } else {
+        const transformedQuizzes = quizzesData.map(attempt => ({
+          id: attempt.id,
+          bookId: attempt.quizzes.book_id,
+          title: attempt.quizzes.title,
+          completedAt: attempt.completed_at,
+          score: attempt.score,
+          totalQuestions: attempt.total_questions
+        }));
+        setUserQuizzes(transformedQuizzes);
+      }
+
+      // Fetch user's annotations
+      const { data: annotationsData, error: annotationsError } = await supabase
+        .from('annotations')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      if (annotationsError) {
+        console.error('Error fetching annotations:', annotationsError);
+      } else {
+        const transformedAnnotations = annotationsData.map(annotation => ({
+          id: annotation.id,
+          bookId: annotation.book_id,
+          userId: annotation.user_id,
+          content: annotation.note_text,
+          selectedText: annotation.selected_text,
+          pageNumber: 0, // We don't have page numbers in the new schema, using chapter-based system
+          chapterId: annotation.chapter_id,
+          createdAt: annotation.created_at,
+          color: annotation.highlight_color
+        }));
+        setAnnotations(transformedAnnotations);
+      }
+
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Load books when user changes
   useEffect(() => {
-    const fetchBooks = () => {
-      if (currentUser) {
-        // Simulate fetch delay
-        setTimeout(() => {
-          setBooks(MOCK_BOOKS.filter(book => book.uploadedBy === currentUser.id));
-          setUserQuizzes(MOCK_QUIZZES);
-          setAnnotations(MOCK_ANNOTATIONS.filter(anno => anno.userId === currentUser.id));
-          setLoading(false);
-        }, 800);
-      } else {
-        setBooks([]);
-        setUserQuizzes([]);
-        setAnnotations([]);
-        setLoading(false);
-      }
-    };
-
-    fetchBooks();
+    loadBooks();
   }, [currentUser]);
 
   // Get book by ID
@@ -173,6 +156,7 @@ export function BookProvider({ children }) {
     return annotations.filter(annotation => annotation.bookId === bookId);
   };
 
+<<<<<<< HEAD
   // Add new book
   const addBook = async (bookData) => {
     try {
@@ -258,60 +242,191 @@ export function BookProvider({ children }) {
         resolve(newBook);
       }, 1000);
     });
+=======
+  // Add new book (this is now handled by FileUpload component)
+  const addBook = async (bookData) => {
+    // This method is kept for backward compatibility
+    // but the actual book creation is now handled in FileUpload component
+    console.log('Adding book:', bookData);
+    return Promise.resolve(bookData);
+>>>>>>> d0dfb41028177582b68f6cd95ada84723c483f41
   };
 
   // Update book progress
-  const updateBookProgress = (bookId, progress) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        setBooks(prevBooks => prevBooks.map(book => 
-          book.id === bookId ? { ...book, progress, lastOpened: new Date().toISOString() } : book
-        ));
-        
-        // Also update in mock data
-        const bookIndex = MOCK_BOOKS.findIndex(book => book.id === bookId);
-        if (bookIndex !== -1) {
-          MOCK_BOOKS[bookIndex].progress = progress;
-          MOCK_BOOKS[bookIndex].lastOpened = new Date().toISOString();
-        }
-        
-        resolve();
-      }, 500);
-    });
+  const updateBookProgress = async (bookId, progress) => {
+    if (!currentUser) return;
+
+    try {
+      const { error } = await supabase
+        .from('reading_progress')
+        .upsert({
+          user_id: currentUser.id,
+          book_id: bookId,
+          progress_percentage: progress,
+          last_read_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,book_id'
+        });
+
+      if (error) throw error;
+
+      // Update local state
+      setBooks(prevBooks => prevBooks.map(book => 
+        book.id === bookId 
+          ? { ...book, progress: progress, lastOpened: new Date().toISOString() }
+          : book
+      ));
+    } catch (error) {
+      console.error('Error updating book progress:', error);
+    }
+  };
+
+  // Add quiz result
+  const addQuizResult = async (bookId, quizData) => {
+    if (!currentUser) return;
+
+    try {
+      // First, find or create the quiz
+      let { data: existingQuiz, error: quizError } = await supabase
+        .from('quizzes')
+        .select('id')
+        .eq('book_id', bookId)
+        .eq('title', quizData.title)
+        .single();
+
+      if (quizError && quizError.code === 'PGRST116') {
+        // Quiz doesn't exist, create it
+        const { data: newQuiz, error: createError } = await supabase
+          .from('quizzes')
+          .insert({
+            book_id: bookId,
+            title: quizData.title,
+            description: `Auto-generated quiz: ${quizData.title}`,
+            difficulty_level: 'intermediate'
+          })
+          .select('id')
+          .single();
+
+        if (createError) throw createError;
+        existingQuiz = newQuiz;
+      } else if (quizError) {
+        throw quizError;
+      }
+
+      // Add the quiz attempt
+      const { data: attempt, error: attemptError } = await supabase
+        .from('quiz_attempts')
+        .insert({
+          user_id: currentUser.id,
+          quiz_id: existingQuiz.id,
+          score: quizData.score,
+          total_questions: quizData.totalQuestions,
+          completed_at: new Date().toISOString()
+        })
+        .select('*')
+        .single();
+
+      if (attemptError) throw attemptError;
+
+      // Update local state
+      const newQuizResult = {
+        id: attempt.id,
+        bookId: bookId,
+        title: quizData.title,
+        completedAt: attempt.completed_at,
+        score: attempt.score,
+        totalQuestions: attempt.total_questions
+      };
+
+      setUserQuizzes(prev => [...prev, newQuizResult]);
+      return newQuizResult;
+    } catch (error) {
+      console.error('Error adding quiz result:', error);
+      throw error;
+    }
   };
 
   // Add annotation
-  const addAnnotation = (bookId, content, pageNumber, color = 'yellow') => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newAnnotation = {
-          id: String(MOCK_ANNOTATIONS.length + 1),
-          bookId,
-          userId: currentUser.id,
-          content,
-          pageNumber,
-          createdAt: new Date().toISOString(),
-          color
-        };
-        
-        setAnnotations(prev => [...prev, newAnnotation]);
-        MOCK_ANNOTATIONS.push(newAnnotation);
-        
-        resolve(newAnnotation);
-      }, 500);
-    });
+  const addAnnotation = async (bookId, content, chapterId, selectedText = '', color = 'yellow') => {
+    if (!currentUser) return;
+
+    try {
+      const { data: annotation, error } = await supabase
+        .from('annotations')
+        .insert({
+          book_id: bookId,
+          chapter_id: chapterId,
+          user_id: currentUser.id,
+          note_text: content,
+          selected_text: selectedText,
+          highlight_color: color,
+          annotation_type: 'note',
+          start_position: 0,
+          end_position: selectedText.length
+        })
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      // Update local state
+      const newAnnotation = {
+        id: annotation.id,
+        bookId: annotation.book_id,
+        userId: annotation.user_id,
+        content: annotation.note_text,
+        selectedText: annotation.selected_text,
+        pageNumber: 0,
+        chapterId: annotation.chapter_id,
+        createdAt: annotation.created_at,
+        color: annotation.highlight_color
+      };
+
+      setAnnotations(prev => [...prev, newAnnotation]);
+      return newAnnotation;
+    } catch (error) {
+      console.error('Error adding annotation:', error);
+      throw error;
+    }
   };
 
-  // Context value
+  // Delete book
+  const deleteBook = async (bookId) => {
+    if (!currentUser) return;
+
+    try {
+      const { error } = await supabase
+        .from('books')
+        .delete()
+        .eq('id', bookId)
+        .eq('user_id', currentUser.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setBooks(prevBooks => prevBooks.filter(book => book.id !== bookId));
+      setUserQuizzes(prevQuizzes => prevQuizzes.filter(quiz => quiz.bookId !== bookId));
+      setAnnotations(prevAnnotations => prevAnnotations.filter(annotation => annotation.bookId !== bookId));
+    } catch (error) {
+      console.error('Error deleting book:', error);
+      throw error;
+    }
+  };
+
   const value = {
     books,
+    userQuizzes,
+    annotations,
     loading,
     getBook,
     getBookQuizzes,
     getBookAnnotations,
     addBook,
     updateBookProgress,
-    addAnnotation
+    addQuizResult,
+    addAnnotation,
+    deleteBook,
+    loadBooks // Export loadBooks so it can be called after successful uploads
   };
 
   return (

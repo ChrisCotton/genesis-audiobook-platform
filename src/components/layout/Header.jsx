@@ -49,6 +49,7 @@ function Header() {
               <div className="ml-10 flex items-baseline space-x-4">
                 <Link to="/" className={`${location.pathname === '/' ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'} px-3 py-2 rounded-md text-sm font-medium`}>Dashboard</Link>
                 <Link to="/library" className={`${location.pathname === '/library' ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'} px-3 py-2 rounded-md text-sm font-medium`}>Library</Link>
+                <Link to="/database-test" className={`${location.pathname === '/database-test' ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'} px-3 py-2 rounded-md text-sm font-medium`}>🗄️ DB Test</Link>
               </div>
             </div>
           </div>
@@ -127,6 +128,7 @@ function Header() {
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           <Link to="/" className={`${location.pathname === '/' ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'} block px-3 py-2 rounded-md text-base font-medium`}>Dashboard</Link>
           <Link to="/library" className={`${location.pathname === '/library' ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'} block px-3 py-2 rounded-md text-base font-medium`}>Library</Link>
+          <Link to="/database-test" className={`${location.pathname === '/database-test' ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'} block px-3 py-2 rounded-md text-base font-medium`}>🗄️ DB Test</Link>
         </div>
         {currentUser && (
           <div className="pt-4 pb-3 border-t border-gray-700">

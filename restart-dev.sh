@@ -174,6 +174,7 @@ show_server_processes() {
         echo "$SUPABASE_PROCESSES" | while read line; do
             echo -e "${YELLOW}  $line${NC}"
         done
+<<<<<<< HEAD
     fi
     
     # Check processes on all common development ports
@@ -211,6 +212,31 @@ show_server_processes() {
     else
         echo -e "${YELLOW}⚠️  Docker Desktop is not running${NC}"
     fi
+=======
+    fi
+    
+    # Check processes on all common development ports
+    echo -e "${GREEN}🌐 Processes on development ports:${NC}"
+    for port in "${DEV_PORTS[@]}"; do
+        PORT_PROCESSES=$(lsof -i:$port 2>/dev/null)
+        if [ ! -z "$PORT_PROCESSES" ]; then
+            echo -e "${CYAN}  Port $port:${NC}"
+            echo "$PORT_PROCESSES" | tail -n +2 | while read line; do
+                echo -e "${YELLOW}    $line${NC}"
+            done
+        fi
+    done
+    
+    # Check if common development ports are responding
+    echo -e "${GREEN}🔗 Port connectivity check:${NC}"
+    for port in 5173 5176 3000 54321; do
+        if curl -s http://localhost:$port > /dev/null 2>&1; then
+            echo -e "${GREEN}✅ Port $port is responding${NC}"
+        else
+            echo -e "${YELLOW}⚠️  Port $port not responding${NC}"
+        fi
+    done
+>>>>>>> d0dfb41028177582b68f6cd95ada84723c483f41
 }
 
 # Function to kill running server processes
@@ -362,13 +388,21 @@ cd "$PROJECT_DIR" || {
 
 # Handle modes that don't start a server
 if [ "$STATUS_ONLY" = true ]; then
+<<<<<<< HEAD
     echo -e "${BLUE}🔍 Checking Genesis Development Environment Status...${NC}"
+=======
+    echo -e "${BLUE}🔍 Checking Genesis Dev Server Status...${NC}"
+>>>>>>> d0dfb41028177582b68f6cd95ada84723c483f41
     show_server_processes
     exit 0
 fi
 
 if [ "$KILL_ONLY" = true ]; then
+<<<<<<< HEAD
     echo -e "${RED}🔪 Killing Genesis Development Servers...${NC}"
+=======
+    echo -e "${RED}🔪 Killing Genesis Dev Servers...${NC}"
+>>>>>>> d0dfb41028177582b68f6cd95ada84723c483f41
     kill_server_processes
     exit 0
 fi
@@ -384,6 +418,7 @@ kill_server_processes
 
 # Wait a moment for processes to fully terminate
 sleep 3
+<<<<<<< HEAD
 
 # Start database services if full mode is requested
 if [ "$FULL_MODE" = true ]; then
@@ -393,6 +428,8 @@ if [ "$FULL_MODE" = true ]; then
     fi
     echo ""
 fi
+=======
+>>>>>>> d0dfb41028177582b68f6cd95ada84723c483f41
 
 echo -e "${YELLOW}🚀 Starting fresh dev server...${NC}"
 
@@ -410,6 +447,7 @@ fi
 
 echo -e "${CYAN}📦 Using package manager: ${YELLOW}$PACKAGE_MANAGER${NC}"
 
+<<<<<<< HEAD
 # Check database connection and provide feedback
 check_database_connection
 
@@ -417,6 +455,12 @@ check_database_connection
 if [ "$BACKGROUND_MODE" = true ]; then
     # Background mode
     echo -e "${BLUE}🔄 Starting Genesis Dev Server (Background Mode)...${NC}"
+=======
+# Start the dev server based on mode
+if [ "$BACKGROUND_MODE" = true ]; then
+    # Background mode
+    echo -e "${BLUE}🔄 Restarting Genesis Dev Server (Background Mode)...${NC}"
+>>>>>>> d0dfb41028177582b68f6cd95ada84723c483f41
     echo -e "${CYAN}ℹ️  Server will continue running after script exits${NC}"
     show_logs_hyperlink "dev-server.log"
     
@@ -442,7 +486,11 @@ if [ "$BACKGROUND_MODE" = true ]; then
     fi
 elif [ "$FOLLOW_MODE" = true ]; then
     # Follow mode
+<<<<<<< HEAD
     echo -e "${BLUE}🔄 Starting Genesis Dev Server (Follow Mode)...${NC}"
+=======
+    echo -e "${BLUE}🔄 Restarting Genesis Dev Server (Follow Mode)...${NC}"
+>>>>>>> d0dfb41028177582b68f6cd95ada84723c483f41
     echo -e "${CYAN}ℹ️  Server will run in background, logs will be tailed here.${NC}"
     
     nohup $DEV_COMMAND > dev-server.log 2>&1 &
@@ -469,7 +517,11 @@ elif [ "$FOLLOW_MODE" = true ]; then
     fi
 else
     # Foreground mode (default)
+<<<<<<< HEAD
     echo -e "${BLUE}🔄 Starting Genesis Dev Server (Foreground Mode)...${NC}"
+=======
+    echo -e "${BLUE}🔄 Restarting Genesis Dev Server (Foreground Mode)...${NC}"
+>>>>>>> d0dfb41028177582b68f6cd95ada84723c483f41
     echo -e "${CYAN}ℹ️  Use Ctrl+C to stop both script and server${NC}"
     echo ""
     show_server_processes
