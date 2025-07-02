@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useBook } from '../contexts/BookContext';
 import BookCard from '../components/book/BookCard';
+import FileUpload from '../components/book/FileUpload';
 
 function LibraryPage() {
   const { currentUser } = useAuth();
@@ -11,13 +12,14 @@ function LibraryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadStep, setUploadStep] = useState(1); // 1: File Upload, 2: Add Details
+  const [extractedBookData, setExtractedBookData] = useState(null);
   const [uploadForm, setUploadForm] = useState({
     title: '',
     author: '',
     description: '',
-    file: null,
-    coverImage: null,
-    totalPages: 0
+    language: 'English',
+    tags: ''
   });
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -42,36 +44,40 @@ function LibraryPage() {
     return matchesSearch;
   });
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Extract information from filename for demo purposes
-      const filename = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
-      const parts = filename.split('-');
-      
-      setUploadForm(prev => ({
-        ...prev,
-        file: file,
-        title: parts[0] ? parts[0].trim() : filename,
-        author: parts[1] ? parts[1].trim() : 'Unknown Author',
-        totalPages: Math.floor(Math.random() * 300) + 100, // Random page count for demo
-      }));
-    }
-  };
-
-  const handleCoverImageChange = (e) => {
-    const file = e.target.files[0];
+  const handleUploadComplete = (bookData) => {
+    setExtractedBookData(bookData);
     setUploadForm(prev => ({
       ...prev,
-      coverImage: file
+      title: bookData.title,
+      author: bookData.author,
+      description: bookData.extractedContent?.description || ''
     }));
+    setUploadStep(2);
+  };
+
+  const handleUploadError = (error) => {
+    setUploadError(error);
+  };
+
+  const resetUploadModal = () => {
+    setShowUploadModal(false);
+    setUploadStep(1);
+    setExtractedBookData(null);
+    setUploadForm({
+      title: '',
+      author: '',
+      description: '',
+      language: 'English',
+      tags: ''
+    });
+    setUploadError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploadError('');
     
-    if (!uploadForm.title || !uploadForm.author || !uploadForm.file) {
+    if (!uploadForm.title || !uploadForm.author || !extractedBookData) {
       setUploadError('Please fill in all required fields');
       return;
     }
@@ -79,32 +85,23 @@ function LibraryPage() {
     setIsUploading(true);
     
     try {
-      // Simulate book upload and processing
-      const newBook = {
+      // Combine extracted data with user input
+      const bookToSave = {
+        ...extractedBookData,
         title: uploadForm.title,
         author: uploadForm.author,
-        description: uploadForm.description || 'No description provided.',
-        coverImage: null, // In a real app, you'd upload and get a URL
-        totalPages: uploadForm.totalPages,
-        hasAudioNarration: false, // Would be generated in a real app
-        tags: []
+        description: uploadForm.description,
+        language: uploadForm.language,
+        tags: uploadForm.tags ? uploadForm.tags.split(',').map(tag => tag.trim()) : []
       };
       
-      await addBook(newBook);
+      await addBook(bookToSave);
       
-      // Reset form and close modal
-      setUploadForm({
-        title: '',
-        author: '',
-        description: '',
-        file: null,
-        coverImage: null,
-        totalPages: 0
-      });
-      setShowUploadModal(false);
+      // Reset and close modal
+      resetUploadModal();
     } catch (error) {
       console.error('Error uploading book:', error);
-      setUploadError('Failed to upload book. Please try again.');
+      setUploadError('Failed to save book. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -219,12 +216,33 @@ function LibraryPage() {
       {/* Upload modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">Upload New Book</h2>
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">Upload a Book</h2>
+                  <div className="flex items-center mt-2 space-x-2">
+                    {/* Step indicator */}
+                    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${uploadStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                      <span className="text-sm font-semibold">1</span>
+                    </div>
+                    <div className={`h-0.5 w-16 ${uploadStep >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+                    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${uploadStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                      <span className="text-sm font-semibold">2</span>
+                    </div>
+                    <div className={`h-0.5 w-16 ${uploadStep >= 3 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+                    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${uploadStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                      <span className="text-sm font-semibold">3</span>
+                    </div>
+                  </div>
+                  <div className="flex space-x-16 mt-2 text-sm text-gray-600">
+                    <span className={uploadStep === 1 ? 'font-semibold text-blue-600' : ''}>Select File</span>
+                    <span className={uploadStep === 2 ? 'font-semibold text-blue-600' : ''}>Extract Content</span>
+                    <span className={uploadStep === 3 ? 'font-semibold text-blue-600' : ''}>Add Details</span>
+                  </div>
+                </div>
                 <button 
-                  onClick={() => setShowUploadModal(false)}
+                  onClick={resetUploadModal}
                   className="text-gray-500 hover:text-gray-700 focus:outline-none"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -239,112 +257,129 @@ function LibraryPage() {
                 </div>
               )}
               
-              <form onSubmit={handleSubmit}>
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="bookFile" className="block text-sm font-medium text-gray-700 mb-1">
-                      Book File (PDF, EPUB, etc.)*
-                    </label>
-                    <input
-                      type="file"
-                      id="bookFile"
-                      accept=".pdf,.epub,.mobi,.txt"
-                      onChange={handleFileChange}
-                      className="w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-md file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="bookTitle" className="block text-sm font-medium text-gray-700 mb-1">
-                      Title*
-                    </label>
-                    <input
-                      type="text"
-                      id="bookTitle"
-                      value={uploadForm.title}
-                      onChange={(e) => setUploadForm(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="bookAuthor" className="block text-sm font-medium text-gray-700 mb-1">
-                      Author*
-                    </label>
-                    <input
-                      type="text"
-                      id="bookAuthor"
-                      value={uploadForm.author}
-                      onChange={(e) => setUploadForm(prev => ({ ...prev, author: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="bookDescription" className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      id="bookDescription"
-                      value={uploadForm.description}
-                      onChange={(e) => setUploadForm(prev => ({ ...prev, description: e.target.value }))}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700 mb-1">
-                      Cover Image (optional)
-                    </label>
-                    <input
-                      type="file"
-                      id="coverImage"
-                      accept="image/*"
-                      onChange={handleCoverImageChange}
-                      className="w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-md file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100"
-                    />
+              {/* Step 1: File Upload */}
+              {uploadStep === 1 && (
+                <div>
+                  <FileUpload 
+                    onUploadComplete={handleUploadComplete}
+                    onUploadError={handleUploadError}
+                  />
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      onClick={resetUploadModal}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
-                
-                <div className="mt-6 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowUploadModal(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isUploading}
-                    className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                  >
-                    {isUploading ? (
-                      <div className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Uploading...
-                      </div>
-                    ) : 'Upload Book'}
-                  </button>
-                </div>
-              </form>
+              )}
+
+              {/* Step 2: Add Details */}
+              {uploadStep === 2 && (
+                <form onSubmit={handleSubmit}>
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="bookTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                        Title*
+                      </label>
+                      <input
+                        type="text"
+                        id="bookTitle"
+                        value={uploadForm.title}
+                        onChange={(e) => setUploadForm(prev => ({ ...prev, title: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="bookAuthor" className="block text-sm font-medium text-gray-700 mb-1">
+                        Author*
+                      </label>
+                      <input
+                        type="text"
+                        id="bookAuthor"
+                        value={uploadForm.author}
+                        onChange={(e) => setUploadForm(prev => ({ ...prev, author: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="bookDescription" className="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        id="bookDescription"
+                        value={uploadForm.description}
+                        onChange={(e) => setUploadForm(prev => ({ ...prev, description: e.target.value }))}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="XXX"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-1">
+                        Language
+                      </label>
+                      <select
+                        id="language"
+                        value={uploadForm.language}
+                        onChange={(e) => setUploadForm(prev => ({ ...prev, language: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="English">English</option>
+                        <option value="Spanish">Spanish</option>
+                        <option value="French">French</option>
+                        <option value="German">German</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">
+                        Tags (comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        id="tags"
+                        value={uploadForm.tags}
+                        onChange={(e) => setUploadForm(prev => ({ ...prev, tags: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="non-fiction, psychology, business"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 flex justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setUploadStep(1)}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                    >
+                      Start Over
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isUploading}
+                      className={`px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                      {isUploading ? (
+                        <div className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Uploading...
+                        </div>
+                      ) : 'Upload Book'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>

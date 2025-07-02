@@ -1,5 +1,5 @@
 #!/bin/bash
-# Quick restart for active development
+# Genesis Development Server Manager
 #
 # Default mode (no options) - runs in foreground
 # ./restart-dev.sh
@@ -9,6 +9,12 @@
 #
 # Background mode with process display
 # ./restart-dev.sh -b
+#
+# Full environment (includes Docker + Supabase)
+# ./restart-dev.sh --full
+#
+# Database services only
+# ./restart-dev.sh --db
 #
 # Just check server status without restarting
 # ./restart-dev.sh -s
@@ -32,64 +38,227 @@ NC='\033[0m' # No Color
 # Project directory
 PROJECT_DIR="$HOME/Learn/AI/Genesis"
 
+# Common development ports to check and clean up
+DEV_PORTS=(
+    5173 5174 5175 5176 5177 5178 5179  # Vite dev server ports
+    3000 3001 3002 3003                 # Common React/Next.js ports
+    54321 54322 54323 54324 54325       # Supabase local ports
+    8000 8080 8081                      # Common development ports
+)
+
 # Default mode
 BACKGROUND_MODE=false
 STATUS_ONLY=false
 FOLLOW_MODE=false
 KILL_ONLY=false
+FULL_MODE=false
+DB_ONLY=false
+
+# Function to check if Docker Desktop is running
+check_docker_status() {
+    if docker info >/dev/null 2>&1; then
+        return 0  # Docker is running
+    else
+        return 1  # Docker is not running
+    fi
+}
+
+# Function to check if Supabase is running
+check_supabase_status() {
+    if curl -s http://localhost:54321 > /dev/null 2>&1; then
+        return 0  # Supabase is running
+    else
+        return 1  # Supabase is not running
+    fi
+}
+
+# Function to start Docker Desktop
+start_docker_desktop() {
+    echo -e "${YELLOW}🐳 Starting Docker Desktop...${NC}"
+    
+    if check_docker_status; then
+        echo -e "${GREEN}✅ Docker Desktop is already running${NC}"
+        return 0
+    fi
+    
+    # Start Docker Desktop
+    open -a "Docker Desktop"
+    
+    # Wait for Docker to start (with timeout)
+    local timeout=60
+    local elapsed=0
+    
+    echo -e "${CYAN}⏳ Waiting for Docker Desktop to start (timeout: ${timeout}s)...${NC}"
+    
+    while [ $elapsed -lt $timeout ]; do
+        if check_docker_status; then
+            echo -e "${GREEN}✅ Docker Desktop is ready (${elapsed}s)${NC}"
+            return 0
+        fi
+        
+        sleep 2
+        elapsed=$((elapsed + 2))
+        
+        # Show progress every 10 seconds
+        if [ $((elapsed % 10)) -eq 0 ]; then
+            echo -e "${CYAN}⏳ Still waiting for Docker... (${elapsed}/${timeout}s)${NC}"
+        fi
+    done
+    
+    echo -e "${RED}❌ Docker Desktop failed to start within ${timeout}s${NC}"
+    echo -e "${YELLOW}💡 Try starting Docker Desktop manually and run: ./restart-dev.sh --db${NC}"
+    return 1
+}
+
+# Function to start Supabase
+start_supabase() {
+    echo -e "${YELLOW}🗄️  Starting Supabase...${NC}"
+    
+    if check_supabase_status; then
+        echo -e "${GREEN}✅ Supabase is already running${NC}"
+        return 0
+    fi
+    
+    # Check if Docker is running first
+    if ! check_docker_status; then
+        echo -e "${RED}❌ Docker Desktop is not running. Cannot start Supabase.${NC}"
+        return 1
+    fi
+    
+    # Start Supabase
+    if supabase start; then
+        echo -e "${GREEN}✅ Supabase started successfully${NC}"
+        return 0
+    else
+        echo -e "${RED}❌ Failed to start Supabase${NC}"
+        echo -e "${YELLOW}💡 Try running: supabase start --debug${NC}"
+        return 1
+    fi
+}
+
+# Function to start database services
+start_database_services() {
+    echo -e "${BLUE}🚀 Starting database services...${NC}"
+    
+    # Start Docker if needed
+    if ! start_docker_desktop; then
+        return 1
+    fi
+    
+    # Start Supabase if needed
+    if ! start_supabase; then
+        return 1
+    fi
+    
+    echo -e "${GREEN}✅ Database services are ready${NC}"
+    return 0
+}
 
 # Function to show running server processes
 show_server_processes() {
-    echo -e "${CYAN}🔍 Checking for running server processes...${NC}"
+    echo -e "${CYAN}🔍 Checking for running development server processes...${NC}"
     
-    # Check for Next.js dev processes
-    NEXT_PROCESSES=$(ps aux | grep -E "next dev|npm run dev" | grep -v grep)
-    if [ ! -z "$NEXT_PROCESSES" ]; then
-        echo -e "${GREEN}📋 Next.js dev processes:${NC}"
-        echo "$NEXT_PROCESSES" | while read line; do
+    # Check for Vite dev processes
+    VITE_PROCESSES=$(ps aux | grep -E "vite|npm run dev|pnpm dev|yarn dev" | grep -v grep)
+    if [ ! -z "$VITE_PROCESSES" ]; then
+        echo -e "${GREEN}📋 Vite/Dev processes:${NC}"
+        echo "$VITE_PROCESSES" | while read line; do
             echo -e "${YELLOW}  $line${NC}"
         done
     fi
     
-    # Check for processes on port 3000
-    PORT_PROCESSES=$(lsof -i:3000 2>/dev/null)
-    if [ ! -z "$PORT_PROCESSES" ]; then
-        echo -e "${GREEN}🌐 Processes on port 3000:${NC}"
-        echo "$PORT_PROCESSES" | while read line; do
+    # Check for Supabase processes
+    SUPABASE_PROCESSES=$(ps aux | grep -E "supabase|postgres|deno" | grep -v grep)
+    if [ ! -z "$SUPABASE_PROCESSES" ]; then
+        echo -e "${GREEN}🗄️  Supabase processes:${NC}"
+        echo "$SUPABASE_PROCESSES" | while read line; do
             echo -e "${YELLOW}  $line${NC}"
         done
-    else
-        echo -e "${YELLOW}⚠️  No processes found on port 3000${NC}"
     fi
     
-    # Check if port 3000 is responding
-    if curl -s http://localhost:3000 > /dev/null 2>&1; then
-        echo -e "${GREEN}✅ Server is responding on http://localhost:3000${NC}"
+    # Check processes on all common development ports
+    echo -e "${GREEN}🌐 Processes on development ports:${NC}"
+    for port in "${DEV_PORTS[@]}"; do
+        PORT_PROCESSES=$(lsof -i:$port 2>/dev/null)
+        if [ ! -z "$PORT_PROCESSES" ]; then
+            echo -e "${CYAN}  Port $port:${NC}"
+            echo "$PORT_PROCESSES" | tail -n +2 | while read line; do
+                echo -e "${YELLOW}    $line${NC}"
+            done
+        fi
+    done
+    
+    # Check if common development ports are responding
+    echo -e "${GREEN}🔗 Service connectivity check:${NC}"
+    for port in 5173 5176 3000; do
+        if curl -s http://localhost:$port > /dev/null 2>&1; then
+            echo -e "${GREEN}✅ Port $port is responding (Dev Server)${NC}"
+        else
+            echo -e "${YELLOW}⚠️  Port $port not responding${NC}"
+        fi
+    done
+    
+    # Check Supabase specifically
+    if check_supabase_status; then
+        echo -e "${GREEN}✅ Port 54321 is responding (Supabase)${NC}"
     else
-        echo -e "${YELLOW}⚠️  Server not yet responding on http://localhost:3000${NC}"
+        echo -e "${YELLOW}⚠️  Port 54321 not responding (Supabase)${NC}"
+    fi
+    
+    # Check Docker status
+    if check_docker_status; then
+        echo -e "${GREEN}✅ Docker Desktop is running${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Docker Desktop is not running${NC}"
     fi
 }
 
 # Function to kill running server processes
 kill_server_processes() {
-    echo -e "${YELLOW}💀 Killing existing Next.js dev servers...${NC}"
+    echo -e "${YELLOW}💀 Killing existing development servers...${NC}"
 
-    # Kill Next.js dev processes
-    pkill -f "next dev" 2>/dev/null
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✅ Killed Next.js dev processes${NC}"
-    else
-        echo -e "${YELLOW}⚠️  No Next.js dev processes found${NC}"
+    # Kill Vite dev processes
+    pkill -f "vite" 2>/dev/null && echo -e "${GREEN}✅ Killed Vite processes${NC}"
+    
+    # Kill npm/pnpm/yarn dev processes
+    pkill -f "npm run dev" 2>/dev/null && echo -e "${GREEN}✅ Killed npm dev processes${NC}"
+    pkill -f "pnpm dev" 2>/dev/null && echo -e "${GREEN}✅ Killed pnpm dev processes${NC}"
+    pkill -f "yarn dev" 2>/dev/null && echo -e "${GREEN}✅ Killed yarn dev processes${NC}"
+    
+    # Kill Next.js dev processes (in case any are running)
+    pkill -f "next dev" 2>/dev/null && echo -e "${GREEN}✅ Killed Next.js dev processes${NC}"
+
+    # Kill any processes on development ports (excluding Docker/Supabase)
+    echo -e "${YELLOW}🔌 Checking and killing processes on development ports...${NC}"
+    for port in "${DEV_PORTS[@]}"; do
+        # Get process info to check if it's a Docker/Supabase process
+        PORT_INFO=$(lsof -i:$port 2>/dev/null)
+        if [ ! -z "$PORT_INFO" ]; then
+            # Skip Docker processes (Supabase runs in Docker)
+            if echo "$PORT_INFO" | grep -q "com.docker\|Docker\|supabase"; then
+                if [[ $port -ge 54321 && $port -le 54325 ]]; then
+                    echo -e "${CYAN}ℹ️  Skipping Supabase/Docker process on port $port${NC}"
+                    continue
+                fi
+            fi
+            
+            # Kill non-Docker processes
+            PORT_PIDS=$(lsof -ti:$port 2>/dev/null)
+            if [ ! -z "$PORT_PIDS" ]; then
+                echo "$PORT_PIDS" | xargs kill -9 2>/dev/null
+                echo -e "${GREEN}✅ Killed processes on port $port${NC}"
+            fi
+        fi
+    done
+
+    # Kill any lingering Node.js processes that might be development servers
+    NODE_PIDS=$(ps aux | grep -E "node.*dev|node.*vite|node.*start" | grep -v grep | awk '{print $2}')
+    if [ ! -z "$NODE_PIDS" ]; then
+        echo "$NODE_PIDS" | xargs kill -9 2>/dev/null
+        echo -e "${GREEN}✅ Killed lingering Node.js dev processes${NC}"
     fi
 
-    # Kill any processes on port 3000
-    PORT_PIDS=$(lsof -ti:3000 2>/dev/null)
-    if [ ! -z "$PORT_PIDS" ]; then
-        echo "$PORT_PIDS" | xargs kill -9 2>/dev/null
-        echo -e "${GREEN}✅ Killed processes on port 3000${NC}"
-    else
-        echo -e "${YELLOW}⚠️  No processes found on port 3000${NC}"
-    fi
+    echo -e "${GREEN}🧹 Development server cleanup complete${NC}"
 }
 
 # Function to show dev server logs hyperlink
@@ -109,12 +278,25 @@ show_logs_hyperlink() {
     echo ""
 }
 
+# Function to check database connection and provide helpful feedback
+check_database_connection() {
+    if ! check_supabase_status; then
+        echo -e "${YELLOW}⚠️  Database not running. To start it:${NC}"
+        echo -e "${CYAN}   Quick start: ${YELLOW}./restart-dev.sh --db${NC}"
+        echo -e "${CYAN}   Full restart: ${YELLOW}./restart-dev.sh --full${NC}"
+        echo -e "${CYAN}   Manual: ${YELLOW}supabase start${NC}"
+        echo ""
+    fi
+}
+
 # Function to show usage
 show_usage() {
     echo -e "${CYAN}Usage: $0 [OPTIONS]${NC}"
     echo -e "${CYAN}Options:${NC}"
     echo -e "  ${YELLOW}-b, --background${NC}    Run dev server in background (script exits, server continues)"
     echo -e "  ${YELLOW}-f, --follow${NC}        Restart server and tail the server log file"
+    echo -e "  ${YELLOW}--full${NC}              Start full environment (Docker + Supabase + Dev Server)"
+    echo -e "  ${YELLOW}--db${NC}                Start database services only (Docker + Supabase)"
     echo -e "  ${YELLOW}-k, --kill${NC}          Kill running server processes and exit"
     echo -e "  ${YELLOW}-s, --status${NC}        Show running server processes without restarting"
     echo -e "  ${YELLOW}-h, --help${NC}          Show this help message"
@@ -126,6 +308,8 @@ show_usage() {
     echo -e "  ${GREEN}./restart-dev.sh${NC}              # Foreground mode (default)"
     echo -e "  ${GREEN}./restart-dev.sh -f${NC}           # Restart server and follow logs"
     echo -e "  ${GREEN}./restart-dev.sh -b${NC}           # Background mode"
+    echo -e "  ${GREEN}./restart-dev.sh --full${NC}       # Full environment setup"
+    echo -e "  ${GREEN}./restart-dev.sh --db${NC}         # Start database services only"
     echo -e "  ${GREEN}./restart-dev.sh -s${NC}           # Just show server status"
     echo -e "  ${GREEN}./restart-dev.sh -k${NC}           # Just kill the server"
 }
@@ -139,6 +323,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         -f|--follow)
             FOLLOW_MODE=true
+            shift
+            ;;
+        --full)
+            FULL_MODE=true
+            shift
+            ;;
+        --db)
+            DB_ONLY=true
             shift
             ;;
         -k|--kill)
@@ -170,65 +362,103 @@ cd "$PROJECT_DIR" || {
 
 # Handle modes that don't start a server
 if [ "$STATUS_ONLY" = true ]; then
-    echo -e "${BLUE}🔍 Checking Kanban Dev Server Status...${NC}"
+    echo -e "${BLUE}🔍 Checking Genesis Development Environment Status...${NC}"
     show_server_processes
     exit 0
 fi
 
 if [ "$KILL_ONLY" = true ]; then
-    echo -e "${RED}🔪 Killing Kanban Dev Server...${NC}"
+    echo -e "${RED}🔪 Killing Genesis Development Servers...${NC}"
     kill_server_processes
     exit 0
+fi
+
+if [ "$DB_ONLY" = true ]; then
+    echo -e "${BLUE}🗄️  Starting Genesis Database Services...${NC}"
+    start_database_services
+    exit $?
 fi
 
 # For all other modes, we restart the server, which involves killing it first.
 kill_server_processes
 
 # Wait a moment for processes to fully terminate
-sleep 2
+sleep 3
+
+# Start database services if full mode is requested
+if [ "$FULL_MODE" = true ]; then
+    echo -e "${BLUE}🚀 Starting full Genesis development environment...${NC}"
+    if ! start_database_services; then
+        echo -e "${RED}❌ Failed to start database services. Continuing with dev server only...${NC}"
+    fi
+    echo ""
+fi
 
 echo -e "${YELLOW}🚀 Starting fresh dev server...${NC}"
+
+# Detect which package manager to use
+if [ -f "pnpm-lock.yaml" ] && command -v pnpm >/dev/null 2>&1; then
+    PACKAGE_MANAGER="pnpm"
+    DEV_COMMAND="pnpm dev"
+elif [ -f "yarn.lock" ] && command -v yarn >/dev/null 2>&1; then
+    PACKAGE_MANAGER="yarn"
+    DEV_COMMAND="yarn dev"
+else
+    PACKAGE_MANAGER="npm"
+    DEV_COMMAND="npm run dev"
+fi
+
+echo -e "${CYAN}📦 Using package manager: ${YELLOW}$PACKAGE_MANAGER${NC}"
+
+# Check database connection and provide feedback
+check_database_connection
 
 # Start the dev server based on mode
 if [ "$BACKGROUND_MODE" = true ]; then
     # Background mode
-    echo -e "${BLUE}🔄 Restarting Kanban Dev Server (Background Mode)...${NC}"
+    echo -e "${BLUE}🔄 Starting Genesis Dev Server (Background Mode)...${NC}"
     echo -e "${CYAN}ℹ️  Server will continue running after script exits${NC}"
     show_logs_hyperlink "dev-server.log"
     
-    nohup npm run dev > dev-server.log 2>&1 &
+    nohup $DEV_COMMAND > dev-server.log 2>&1 &
     DEV_PID=$!
     
-    sleep 3
+    sleep 5
     
     if kill -0 $DEV_PID 2>/dev/null; then
         echo -e "${GREEN}✅ Dev server started in background (PID: $DEV_PID)${NC}"
-        echo -e "${BLUE}🌐 Server should be available at: http://localhost:3000${NC}"
+        echo -e "${BLUE}🌐 Server should be available soon. Check these URLs:${NC}"
+        echo -e "${CYAN}   - http://localhost:5173 (Vite default)${NC}"
+        echo -e "${CYAN}   - http://localhost:3000 (Alternative)${NC}"
         echo ""
         show_server_processes
         echo ""
         echo -e "${GREEN}✅ Script complete - dev server continues running${NC}"
     else
         echo -e "${RED}❌ Failed to start dev server in background${NC}"
+        echo -e "${YELLOW}📄 Checking log for errors:${NC}"
+        cat dev-server.log
         exit 1
     fi
 elif [ "$FOLLOW_MODE" = true ]; then
     # Follow mode
-    echo -e "${BLUE}🔄 Restarting Kanban Dev Server (Follow Mode)...${NC}"
+    echo -e "${BLUE}🔄 Starting Genesis Dev Server (Follow Mode)...${NC}"
     echo -e "${CYAN}ℹ️  Server will run in background, logs will be tailed here.${NC}"
     
-    nohup npm run dev > dev-server.log 2>&1 &
+    nohup $DEV_COMMAND > dev-server.log 2>&1 &
     DEV_PID=$!
     
     echo -e "${CYAN}⏳ Waiting for server to start... (PID: $DEV_PID)${NC}"
-    sleep 4 # Give it a moment
+    sleep 5 # Give it a moment
     
     if kill -0 $DEV_PID 2>/dev/null; then
         echo -e "${GREEN}✅ Dev server started successfully.${NC}"
-        echo -e "${BLUE}🌐 Server should be available at: http://localhost:3000${NC}"
+        echo -e "${BLUE}🌐 Server should be available soon. Check these URLs:${NC}"
+        echo -e "${CYAN}   - http://localhost:5173 (Vite default)${NC}"
+        echo -e "${CYAN}   - http://localhost:3000 (Alternative)${NC}"
         echo -e "${CYAN}📋 Tailing logs now. Press Ctrl+C to stop viewing logs.${NC}"
         echo -e "${YELLOW}⚠️  Note: Stopping the log tail does NOT stop the server.${NC}"
-        echo -e "${CYAN}🛑 To stop the server later, run: pkill -f 'next dev'${NC}"
+        echo -e "${CYAN}🛑 To stop the server later, run: ./restart-dev.sh -k${NC}"
         echo ""
         tail -f dev-server.log
     else
@@ -239,7 +469,7 @@ elif [ "$FOLLOW_MODE" = true ]; then
     fi
 else
     # Foreground mode (default)
-    echo -e "${BLUE}🔄 Restarting Kanban Dev Server (Foreground Mode)...${NC}"
+    echo -e "${BLUE}🔄 Starting Genesis Dev Server (Foreground Mode)...${NC}"
     echo -e "${CYAN}ℹ️  Use Ctrl+C to stop both script and server${NC}"
     echo ""
     show_server_processes
@@ -248,6 +478,6 @@ else
     echo -e "${CYAN}   📺 Logs will be displayed directly in this terminal${NC}"
     echo ""
     echo -e "${CYAN}🚀 Starting dev server in foreground...${NC}"
-    npm run dev
+    $DEV_COMMAND
     echo -e "${YELLOW}⚠️  Dev server stopped${NC}"
 fi 

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import supabase from '../config/supabase';
 
 // Create book context
 const BookContext = createContext();
@@ -173,11 +174,78 @@ export function BookProvider({ children }) {
   };
 
   // Add new book
-  const addBook = (bookData) => {
+  const addBook = async (bookData) => {
+    try {
+      // Prepare book data for database
+      const bookToInsert = {
+        title: bookData.title,
+        author: bookData.author,
+        description: bookData.description || 'No description provided.',
+        cover_image_url: bookData.coverImage || null,
+        file_path: bookData.filePath || null,
+        file_url: bookData.fileUrl || null,
+        original_filename: bookData.originalName || null,
+        file_size: bookData.fileSize || 0,
+        file_type: bookData.fileType || null,
+        total_pages: bookData.totalPages || 0,
+        extracted_content: bookData.extractedContent?.content || null,
+        chapters: bookData.extractedContent?.chapters || null,
+        user_id: currentUser.id,
+        uploaded_at: new Date().toISOString(),
+        last_opened_at: null,
+        reading_progress: 0,
+        has_audio_narration: false,
+        tags: bookData.tags || []
+      };
+
+      // Insert into Supabase
+      const { data, error } = await supabase
+        .from('books')
+        .insert([bookToInsert])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        // Fallback to local storage for now
+        return addBookLocally(bookData);
+      }
+
+      // Convert database format back to UI format
+      const newBook = {
+        id: data.id,
+        title: data.title,
+        author: data.author,
+        description: data.description,
+        coverImage: data.cover_image_url,
+        progress: data.reading_progress,
+        totalPages: data.total_pages,
+        uploadedBy: data.user_id,
+        uploadedAt: data.uploaded_at,
+        lastOpened: data.last_opened_at,
+        hasAudioNarration: data.has_audio_narration,
+        tags: data.tags || [],
+        filePath: data.file_path,
+        fileUrl: data.file_url,
+        extractedContent: data.extracted_content
+      };
+
+      setBooks(prevBooks => [...prevBooks, newBook]);
+      return newBook;
+
+    } catch (error) {
+      console.error('Error adding book:', error);
+      // Fallback to local storage
+      return addBookLocally(bookData);
+    }
+  };
+
+  // Fallback function for when Supabase is not available
+  const addBookLocally = (bookData) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         const newBook = {
-          id: String(MOCK_BOOKS.length + 1),
+          id: String(Date.now()), // Use timestamp as ID
           ...bookData,
           uploadedBy: currentUser.id,
           uploadedAt: new Date().toISOString(),
@@ -186,7 +254,6 @@ export function BookProvider({ children }) {
         };
         
         setBooks(prevBooks => [...prevBooks, newBook]);
-        MOCK_BOOKS.push(newBook);
         
         resolve(newBook);
       }, 1000);
